@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Afterglow</string>
+    <string name="accessibility_service_label">Afterglow music visualizer</string>
+    <string name="accessibility_service_description">Notices when an app you enabled (YouTube by default) plays music and shows a visualizer on top. It only reads which app is in front and whether you are using the remote there. No screen content is read, and keys are never intercepted.</string>
+    <string name="capture_channel">Audio capture</string>
+    <string name="capture_notification">Listening to playback for the visualizer</string>
+
+    <string name="main_subtitle">Music visualizations over YouTube. When music plays, a live preview appears in the corner. Press OK while it is highlighted to go full screen.</string>
+    <string name="setting_enabled">Visualizer on</string>
+
+    <string name="section_setup">Setup</string>
+    <string name="setup_accessibility">Accessibility service</string>
+    <string name="setup_accessibility_body">Required. Turn on \"Afterglow music visualizer\" under Accessibility. On sideloaded apps, choose \"Allow restricted settings\" in App info first.</string>
+    <string name="setup_permission">Audio access</string>
+    <string name="setup_permission_body">Required to analyse what is playing. Nothing is recorded or stored.</string>
+    <string name="setup_capture">System audio capture</string>
+    <string name="setup_capture_body">Only needed if the Visualizer effect hears nothing on this TV. Android shows a recording icon while it is in use, so Afterglow only holds it during a session. To skip the confirmation, run once: adb shell appops set dev.heynol.afterglow PROJECT_MEDIA allow</string>
+    <string name="setup_song_info">Song info</string>
+    <string name="setup_song_info_body">Optional. Shows title and artist and makes music detection more reliable. If this TV hides the setting: adb shell cmd notification allow_listener dev.heynol.afterglow/dev.heynol.afterglow.service.MediaListenerService</string>
+    <string name="setup_test">Try the overlay</string>
+    <string name="setup_test_body">Shows the preview over this screen with a demo track. OK = full screen, ◀ ▶ = switch, ▼ = all visuals, ▲ = minimise.</string>
+
+    <string name="section_visuals">Visualizations</string>
+    <string name="visuals_manage">All visualizations</string>
+    <string name="visuals_manage_body">Preview each one, set colours and knobs, or remove it from the rotation.</string>
+    <string name="visuals_count">%1$d of %2$d on</string>
+
+    <string name="section_preview">Corner preview</string>
+    <string name="setting_corner">Corner</string>
+    <string name="setting_corner_body">Top right stays clear of YouTube\'s title and player controls.</string>
+    <string name="corner_top_left">Top left</string>
+    <string name="corner_top_right">Top right</string>
+    <string name="corner_bottom_left">Bottom left</string>
+    <string name="corner_bottom_right">Bottom right</string>
+    <string name="setting_size">Size</string>
+    <string name="size_small">Small</string>
+    <string name="size_medium">Medium</string>
+    <string name="size_large">Large</string>
+    <string name="setting_focus_time">Preview timer</string>
+    <string name="setting_focus_time_body">A ring runs down around the highlighted preview; when it\'s gone, the preview hides and comes back with the next song. Off: the preview keeps the remote until you press X, ▼ or Back.</string>
+    <string name="setting_refocus">Highlight again on a new song</string>
+    <string name="setting_refocus_body">Only while you are not using the remote.</string>
+    <string name="setting_passive_hide">Hide preview after</string>
+    <string name="setting_passive_hide_body">The preview comes back with the next song.</string>
+    <string name="value_seconds">%d s</string>
+    <string name="value_auto">Automatic</string>
+    <string name="value_off">Off</string>
+    <string name="value_never">Never</string>
+
+    <string name="section_fullscreen">Full screen</string>
+    <string name="setting_auto_cycle">Switch visuals automatically</string>
+    <string name="setting_auto_cycle_body">Cross-fades to the next visualization.</string>
+    <string name="cycle_off">Off</string>
+    <string name="cycle_track">On every song</string>
+    <string name="cycle_1">Every minute</string>
+    <string name="cycle_3">Every 3 min</string>
+    <string name="cycle_5">Every 5 min</string>
+    <string name="setting_shuffle">Random order when switching automatically</string>
+    <string name="setting_track_info">Show song title</string>
+    <string name="setting_track_info_body">Briefly, when a song starts. Needs song info access.</string>
+    <string name="setting_opacity">Opacity</string>
+    <string name="setting_opacity_body" formatted="false">Below 100 %, the video shows through.</string>
+
+    <string name="section_detection">Music detection &amp; audio</string>
+    <string name="setting_detection">When to show</string>
+    <string name="setting_detection_body">Automatic tells music from talk by rhythm, harmony and speech patterns, plus the song info.</string>
+    <string name="detection_auto">When music plays</string>
+    <string name="detection_any">On any playback</string>
+    <string name="setting_audio_source">Audio source</string>
+    <string name="setting_audio_source_body">Automatic uses the Visualizer effect, which needs no recording, and only switches to system audio capture if that stays silent. While capture runs, the TV shows a recording icon.</string>
+    <string name="source_auto">Automatic</string>
+    <string name="source_capture">System audio</string>
+    <string name="source_visualizer">Visualizer effect</string>
+    <string name="setting_av_delay">Picture delay</string>
+    <string name="setting_av_delay_body">Holds visuals back so beats land with the sound from TV or soundbar.</string>
+    <string name="setting_sensitivity">Sensitivity</string>
+
+    <string name="section_look">Performance</string>
+    <string name="setting_quality">Quality</string>
+    <string name="setting_quality_body">Maximum resolution. Heavy visuals lower it on their own to stay smooth.</string>
+    <string name="quality_efficient">Efficient · 540p</string>
+    <string name="quality_balanced">Balanced · 720p</string>
+    <string name="quality_high">High · 1080p</string>
+    <string name="setting_fps">Frame rate</string>
+    <string name="setting_fps_body">Automatic runs at 60 fps and drops a visual to 30 when it cannot hold that even at its lowest resolution — at 30 fps the GPU has twice the time per frame and renders about twice the pixels.</string>
+    <string name="setting_reduce_flashing">Reduce flashing</string>
+    <string name="setting_reduce_flashing_body">Softens beat flashes and strobes.</string>
+
+    <string name="section_apps">Apps</string>
+    <string name="section_diagnostics">Diagnostics</string>
+
+    <string name="status_on">✓ On</string>
+    <string name="status_off">Off</string>
+    <string name="status_granted">✓ Granted</string>
+    <string name="status_missing">Missing</string>
+    <string name="status_optional">Optional</string>
+    <string name="capture_active">✓ Active</string>
+    <string name="capture_ready">✓ Ready (no prompt)</string>
+    <string name="capture_consent">Needs confirmation</string>
+    <string name="capture_unsupported">Not available on this TV</string>
+
+    <string name="diag_service">Service %1$s</string>
+    <string name="diag_foreground">Foreground %1$s · session %2$s%3$s</string>
+    <string name="diag_audio">Audio %1$s · level %2$d %%</string>
+    <string name="diag_music">Classifier %1$s · music %2$s · shown %3$s</string>
+    <string name="diag_cues">Rhythm %1$.2f · no-syllables %2$.2f · no-pauses %3$.2f · tonal %4$.2f · bass %5$.2f</string>
+    <string name="diag_now_playing">Now playing %1$s — %2$s %3$s</string>
+    <string name="diag_overlay">Overlay %1$s</string>
+
+    <string name="toast_settings_missing">This TV hides that screen. Use the adb command shown here.</string>
+    <string name="toast_enable_service">Turn on the accessibility service first.</string>
+
+    <string name="visuals_title">Visualizations</string>
+    <string name="visual_in_rotation">In rotation</string>
+    <string name="visual_in_rotation_body">Hidden visuals are skipped when switching.</string>
+    <string name="visual_palette">Colours</string>
+    <string name="visual_speed">Speed</string>
+    <string name="visual_reactivity">Reactivity</string>
+    <string name="visual_use_now">Start with this one</string>
+    <string name="visual_use_now_body">The overlay opens with this visualization next time.</string>
+    <string name="visual_reset">Reset to defaults</string>
+    <string name="visual_hidden">Hidden</string>
+
+    <string name="overlay_all_visuals">ALL VISUALIZATIONS</string>
+    <string name="overlay_now_playing">Playing</string>
+    <string name="overlay_now_playing_track">♪  NOW PLAYING</string>
+    <string name="overlay_chip_open">OK · Full screen</string>
+    <string name="overlay_chip_close">OK · Hide</string>
+    <string name="overlay_index">%1$d / %2$d</string>
+    <string name="overlay_hints">◀ ▶ Switch  ·  ▼ All  ·  ▲ Minimise  ·  OK Info</string>
+</resources>

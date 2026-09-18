@@ -1,0 +1,1302 @@
+{
+  "palettes": [
+    {
+      "id": "neon",
+      "name": {
+        "en": "Neon",
+        "de": "Neon"
+      },
+      "colors": [
+        "#00E5FF",
+        "#7B2CFF",
+        "#FF2BD6",
+        "#FFB300"
+      ]
+    },
+    {
+      "id": "sunset",
+      "name": {
+        "en": "Sunset",
+        "de": "Sonnenuntergang"
+      },
+      "colors": [
+        "#FFD166",
+        "#FF7A3D",
+        "#FF2E6E",
+        "#7B2FF7"
+      ]
+    },
+    {
+      "id": "ocean",
+      "name": {
+        "en": "Ocean",
+        "de": "Ozean"
+      },
+      "colors": [
+        "#00F0C8",
+        "#00A3FF",
+        "#2E5BFF",
+        "#B8F3FF"
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": {
+        "en": "Aurora",
+        "de": "Polarlicht"
+      },
+      "colors": [
+        "#39FF88",
+        "#00C2FF",
+        "#8A4DFF",
+        "#C6FF3D"
+      ]
+    },
+    {
+      "id": "inferno",
+      "name": {
+        "en": "Inferno",
+        "de": "Inferno"
+      },
+      "colors": [
+        "#FFE45C",
+        "#FF8A00",
+        "#FF2E2E",
+        "#C2188C"
+      ]
+    },
+    {
+      "id": "vapor",
+      "name": {
+        "en": "Vaporwave",
+        "de": "Vaporwave"
+      },
+      "colors": [
+        "#FF71CE",
+        "#01CDFE",
+        "#05FFA1",
+        "#B967FF"
+      ]
+    },
+    {
+      "id": "phosphor",
+      "name": {
+        "en": "Phosphor",
+        "de": "Phosphor"
+      },
+      "colors": [
+        "#4DFF7A",
+        "#B4FF5C",
+        "#2BFFB8",
+        "#8CFF9E"
+      ]
+    },
+    {
+      "id": "ice",
+      "name": {
+        "en": "Ice",
+        "de": "Eis"
+      },
+      "colors": [
+        "#FFFFFF",
+        "#9FD8FF",
+        "#5C8DFF",
+        "#D9ECFF"
+      ]
+    },
+    {
+      "id": "rainbow",
+      "name": {
+        "en": "Rainbow",
+        "de": "Regenbogen"
+      },
+      "colors": [
+        "#FF3B3B",
+        "#FFE53B",
+        "#3BFFB0",
+        "#6B3BFF"
+      ]
+    },
+    {
+      "id": "blood",
+      "name": {
+        "en": "Blood",
+        "de": "Blut"
+      },
+      "colors": [
+        "#E0301E",
+        "#FF8A3D",
+        "#E8DCC8",
+        "#7A1010"
+      ]
+    },
+    {
+      "id": "crt",
+      "name": {
+        "en": "CRT",
+        "de": "Röhre"
+      },
+      "colors": [
+        "#4DFF7A",
+        "#32E0FF",
+        "#FFD34D",
+        "#FF5CA8"
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "id": "spectrum",
+      "name": {
+        "en": "Spectrum & scope",
+        "de": "Spektrum & Oszilloskop"
+      }
+    },
+    {
+      "id": "flow",
+      "name": {
+        "en": "MilkDrop flow",
+        "de": "MilkDrop-Flow"
+      }
+    },
+    {
+      "id": "worlds",
+      "name": {
+        "en": "3D worlds",
+        "de": "3D-Welten"
+      }
+    },
+    {
+      "id": "generative",
+      "name": {
+        "en": "Generative art",
+        "de": "Generative Kunst"
+      }
+    }
+  ],
+  "visuals": [
+    {
+      "id": "lissajous",
+      "shader": "lissajous",
+      "category": "spectrum",
+      "palette": "ice",
+      "cost": 0.6,
+      "feedback": true,
+      "tonemap": true,
+      "name": {
+        "en": "Lissajous",
+        "de": "Lissajous"
+      },
+      "description": {
+        "en": "A stereo vector scope: the music draws its own glowing figures.",
+        "de": "Stereo-Vektorskop: Die Musik zeichnet ihre eigenen leuchtenden Figuren."
+      },
+      "params": [
+        {
+          "id": "afterglow",
+          "name": {
+            "en": "Afterglow",
+            "de": "Nachleuchten"
+          },
+          "default": 0.75
+        },
+        {
+          "id": "drift",
+          "name": {
+            "en": "Drift",
+            "de": "Drift"
+          },
+          "default": 0.35
+        },
+        {
+          "id": "hue",
+          "name": {
+            "en": "Colour shift",
+            "de": "Farbwandel"
+          },
+          "default": 0.2
+        }
+      ],
+      "strokes": [
+        {
+          "mode": "xy",
+          "scale": 0.95,
+          "width": 3.0,
+          "alpha": 0.55,
+          "hue": 0.0,
+          "hueSpeed": 0.05,
+          "levelAlpha": 0.35,
+          "levelScale": 0.55
+        }
+      ]
+    },
+    {
+      "id": "cymatics",
+      "shader": "cymatics",
+      "category": "generative",
+      "palette": "ice",
+      "cost": 1.1,
+      "name": {
+        "en": "Cymatics",
+        "de": "Kymatik"
+      },
+      "description": {
+        "en": "Sand forming Chladni patterns on a plate vibrating with the melody.",
+        "de": "Sand formt Chladni-Figuren auf einer Platte, die mit der Melodie schwingt."
+      },
+      "params": [
+        {
+          "id": "modes",
+          "name": {
+            "en": "Mode range",
+            "de": "Modenbereich"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "glow",
+          "name": {
+            "en": "Sand glow",
+            "de": "Sandleuchten"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "shape",
+          "name": {
+            "en": "Plate",
+            "de": "Platte"
+          },
+          "default": 0.0,
+          "options": [
+            {
+              "en": "Square",
+              "de": "Eckig"
+            },
+            {
+              "en": "Round",
+              "de": "Rund"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "distortion",
+      "shader": "distortion",
+      "category": "spectrum",
+      "palette": "blood",
+      "cost": 1.2,
+      "name": {
+        "en": "Distortion",
+        "de": "Verzerrer"
+      },
+      "description": {
+        "en": "The waveform through a fuzz pedal on dirty film, torn into glitches by the beat.",
+        "de": "Die Wellenform durch ein Fuzz-Pedal auf verdrecktem Film, im Takt zu Glitches zerrissen."
+      },
+      "params": [
+        {
+          "id": "drive",
+          "name": {
+            "en": "Drive",
+            "de": "Verzerrung"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "grime",
+          "name": {
+            "en": "Grime",
+            "de": "Dreck"
+          },
+          "default": 0.7
+        },
+        {
+          "id": "glitch",
+          "name": {
+            "en": "Glitches",
+            "de": "Glitches"
+          },
+          "default": 0.4
+        }
+      ]
+    },
+    {
+      "id": "phosphor",
+      "shader": "phosphor",
+      "category": "spectrum",
+      "palette": "crt",
+      "cost": 0.6,
+      "feedback": true,
+      "tonemap": true,
+      "name": {
+        "en": "Phosphor",
+        "de": "Phosphor"
+      },
+      "description": {
+        "en": "Dual-trace CRT scope; both beams drift through the palette and overlap in the middle.",
+        "de": "Zweikanal-Oszilloskop; beide Strahlen wandern durch die Palette und überlappen in der Mitte."
+      },
+      "params": [
+        {
+          "id": "afterglow",
+          "name": {
+            "en": "Afterglow",
+            "de": "Nachleuchten"
+          },
+          "default": 0.6
+        },
+        {
+          "id": "grid",
+          "name": {
+            "en": "Graticule",
+            "de": "Raster"
+          },
+          "default": 1.0,
+          "options": [
+            {
+              "en": "Off",
+              "de": "Aus"
+            },
+            {
+              "en": "On",
+              "de": "An"
+            }
+          ]
+        }
+      ],
+      "strokes": [
+        {
+          "mode": "wave",
+          "channel": 0,
+          "center": [
+            0.0,
+            0.24
+          ],
+          "scale": 0.42,
+          "width": 4.5,
+          "alpha": 0.6,
+          "hue": 0.0,
+          "hueSpeed": 0.035,
+          "levelScale": 0.3
+        },
+        {
+          "mode": "wave",
+          "channel": 1,
+          "center": [
+            0.0,
+            -0.24
+          ],
+          "scale": 0.42,
+          "width": 4.5,
+          "alpha": 0.6,
+          "hue": 0.45,
+          "hueSpeed": 0.055,
+          "levelScale": 0.3
+        }
+      ]
+    },
+    {
+      "id": "kaleidoscope",
+      "shader": "kaleidoscope",
+      "category": "flow",
+      "palette": "rainbow",
+      "cost": 0.8,
+      "feedback": true,
+      "tonemap": true,
+      "name": {
+        "en": "Kaleidoscope",
+        "de": "Kaleidoskop"
+      },
+      "description": {
+        "en": "Waveforms shattered into rotating mirror crystals.",
+        "de": "Wellenformen, zersplittert in rotierende Spiegelkristalle."
+      },
+      "params": [
+        {
+          "id": "symmetry",
+          "name": {
+            "en": "Symmetry",
+            "de": "Symmetrie"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "rotation",
+          "name": {
+            "en": "Rotation",
+            "de": "Rotation"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "trails",
+          "name": {
+            "en": "Trails",
+            "de": "Spuren"
+          },
+          "default": 0.5
+        }
+      ],
+      "strokes": [
+        {
+          "mode": "circle",
+          "radius": 0.34,
+          "scale": 0.2,
+          "width": 3.5,
+          "alpha": 0.6,
+          "hue": 0.0,
+          "hueSpeed": 0.06,
+          "spin": 0.3,
+          "levelAlpha": 0.6,
+          "levelScale": 0.35
+        },
+        {
+          "mode": "wave",
+          "center": [
+            0.0,
+            0.0
+          ],
+          "scale": 0.3,
+          "width": 3.0,
+          "alpha": 0.55,
+          "hue": 0.5,
+          "hueSpeed": 0.04,
+          "spin": -0.15,
+          "levelAlpha": 0.6,
+          "levelScale": 0.35
+        },
+        {
+          "mode": "xy",
+          "scale": 0.55,
+          "width": 2.5,
+          "alpha": 0.35,
+          "hue": 0.25,
+          "hueSpeed": 0.05,
+          "spin": 0.1,
+          "levelAlpha": 0.5,
+          "levelScale": 0.35
+        }
+      ],
+      "composite": "kaleidoscope_composite"
+    },
+    {
+      "id": "liquid_dream",
+      "shader": "liquid_dream",
+      "category": "flow",
+      "palette": "neon",
+      "cost": 0.8,
+      "feedback": true,
+      "tonemap": true,
+      "name": {
+        "en": "Liquid Dream",
+        "de": "Flüssiger Traum"
+      },
+      "description": {
+        "en": "MilkDrop-style feedback that morphs between a whirlpool, a bloom and twin vortices.",
+        "de": "MilkDrop-Feedback, das zwischen Strudel, Blüte und Doppelwirbel wechselt."
+      },
+      "params": [
+        {
+          "id": "warp",
+          "name": {
+            "en": "Warp",
+            "de": "Verzerrung"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "trails",
+          "name": {
+            "en": "Trails",
+            "de": "Spuren"
+          },
+          "default": 0.6
+        },
+        {
+          "id": "zoom",
+          "name": {
+            "en": "Zoom",
+            "de": "Zoom"
+          },
+          "default": 0.4
+        }
+      ],
+      "strokes": [
+        {
+          "mode": "circle",
+          "channel": 0,
+          "radius": 0.3,
+          "scale": 0.16,
+          "width": 3.5,
+          "alpha": 0.5,
+          "hue": 0.0,
+          "hueSpeed": 0.07,
+          "spin": 0.25,
+          "levelAlpha": 0.8
+        }
+      ]
+    },
+    {
+      "id": "ink",
+      "shader": "ink",
+      "category": "flow",
+      "palette": "ocean",
+      "cost": 1.3,
+      "feedback": true,
+      "tonemap": true,
+      "name": {
+        "en": "Ink",
+        "de": "Tinte"
+      },
+      "description": {
+        "en": "Coloured ink swirling through water, stirred by bass, mids and highs.",
+        "de": "Farbige Tinte wirbelt durchs Wasser, angetrieben von Bass, Mitten und Höhen."
+      },
+      "params": [
+        {
+          "id": "turbulence",
+          "name": {
+            "en": "Turbulence",
+            "de": "Turbulenz"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "dye",
+          "name": {
+            "en": "Ink amount",
+            "de": "Tintenmenge"
+          },
+          "default": 0.7
+        },
+        {
+          "id": "fade",
+          "name": {
+            "en": "Fade",
+            "de": "Verblassen"
+          },
+          "default": 0.3
+        }
+      ],
+      "composite": "ink_composite"
+    },
+    {
+      "id": "blob",
+      "shader": "blob",
+      "category": "worlds",
+      "palette": "vapor",
+      "cost": 1.2,
+      "name": {
+        "en": "Blob",
+        "de": "Blob"
+      },
+      "description": {
+        "en": "A liquid-chrome sphere that ripples and swells with the music.",
+        "de": "Eine Kugel aus flüssigem Chrom, die mit der Musik wogt und anschwillt."
+      },
+      "params": [
+        {
+          "id": "wobble",
+          "name": {
+            "en": "Wobble",
+            "de": "Wabbeln"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "iridescence",
+          "name": {
+            "en": "Iridescence",
+            "de": "Schillern"
+          },
+          "default": 0.6
+        },
+        {
+          "id": "spin",
+          "name": {
+            "en": "Spin",
+            "de": "Drehung"
+          },
+          "default": 0.3
+        }
+      ]
+    },
+    {
+      "id": "julia",
+      "shader": "julia",
+      "category": "generative",
+      "palette": "inferno",
+      "cost": 1.0,
+      "name": {
+        "en": "Julia",
+        "de": "Julia"
+      },
+      "description": {
+        "en": "A Julia fractal that changes shape with the phrases of the song and cracks on the bass.",
+        "de": "Ein Julia-Fraktal, das mit jeder Phrase die Form wechselt und im Bass aufbricht."
+      },
+      "params": [
+        {
+          "id": "detail",
+          "name": {
+            "en": "Detail",
+            "de": "Detail"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "zoom",
+          "name": {
+            "en": "Zoom",
+            "de": "Zoom"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "colourSpeed",
+          "name": {
+            "en": "Colour speed",
+            "de": "Farbtempo"
+          },
+          "default": 0.4
+        }
+      ]
+    },
+    {
+      "id": "fractal",
+      "shader": "fractal",
+      "category": "worlds",
+      "palette": "aurora",
+      "cost": 1.2,
+      "name": {
+        "en": "Fractal",
+        "de": "Fraktal"
+      },
+      "description": {
+        "en": "Fly through an endless tangle of glowing fractal filaments.",
+        "de": "Flug durch ein endloses Geflecht leuchtender Fraktal-Fäden."
+      },
+      "params": [
+        {
+          "id": "speed",
+          "name": {
+            "en": "Speed",
+            "de": "Tempo"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "complexity",
+          "name": {
+            "en": "Complexity",
+            "de": "Komplexität"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "glow",
+          "name": {
+            "en": "Glow",
+            "de": "Leuchten"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "plasma",
+      "shader": "plasma",
+      "category": "generative",
+      "palette": "rainbow",
+      "cost": 0.5,
+      "name": {
+        "en": "Plasma",
+        "de": "Plasma"
+      },
+      "description": {
+        "en": "The demoscene classic: flowing sine plasma with beat-sharpened contours.",
+        "de": "Der Demoszene-Klassiker: fließendes Sinus-Plasma mit taktscharfen Konturen."
+      },
+      "params": [
+        {
+          "id": "scale",
+          "name": {
+            "en": "Scale",
+            "de": "Maßstab"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "contours",
+          "name": {
+            "en": "Contours",
+            "de": "Konturen"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "scanlines",
+          "name": {
+            "en": "Scanlines",
+            "de": "Scanlines"
+          },
+          "default": 0.0
+        }
+      ]
+    },
+    {
+      "id": "aurora",
+      "shader": "aurora",
+      "category": "generative",
+      "palette": "aurora",
+      "cost": 1.4,
+      "name": {
+        "en": "Aurora",
+        "de": "Polarlicht"
+      },
+      "description": {
+        "en": "Northern lights dancing over a still mountain lake.",
+        "de": "Polarlichter tanzen über einem stillen Bergsee."
+      },
+      "params": [
+        {
+          "id": "intensity",
+          "name": {
+            "en": "Intensity",
+            "de": "Intensität"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "speed",
+          "name": {
+            "en": "Curtain speed",
+            "de": "Vorhangtempo"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "reflection",
+          "name": {
+            "en": "Reflection",
+            "de": "Spiegelung"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "hexwall",
+      "shader": "hexwall",
+      "category": "spectrum",
+      "palette": "neon",
+      "cost": 0.9,
+      "name": {
+        "en": "Hex Wall",
+        "de": "Hex-Wand"
+      },
+      "description": {
+        "en": "An LED stage wall of hexagons with beat shockwaves.",
+        "de": "Eine LED-Bühnenwand aus Sechsecken mit Schockwellen im Takt."
+      },
+      "params": [
+        {
+          "id": "size",
+          "name": {
+            "en": "Cell size",
+            "de": "Zellgröße"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "shockwave",
+          "name": {
+            "en": "Shockwave",
+            "de": "Schockwelle"
+          },
+          "default": 0.6
+        },
+        {
+          "id": "sparkle",
+          "name": {
+            "en": "Sparkle",
+            "de": "Funkeln"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "prism",
+      "shader": "prism_bars",
+      "category": "spectrum",
+      "palette": "neon",
+      "cost": 0.6,
+      "name": {
+        "en": "Prism",
+        "de": "Prisma"
+      },
+      "description": {
+        "en": "Glossy spectrum bars with falling peaks and a mirrored floor.",
+        "de": "Glänzende Spektrumbalken mit fallenden Spitzen und gespiegeltem Boden."
+      },
+      "params": [
+        {
+          "id": "bars",
+          "name": {
+            "en": "Bars",
+            "de": "Balken"
+          },
+          "default": 0.5,
+          "options": [
+            "32",
+            "48",
+            "64",
+            "80",
+            "96"
+          ]
+        },
+        {
+          "id": "mirror",
+          "name": {
+            "en": "Bass in the middle",
+            "de": "Bass in der Mitte"
+          },
+          "default": 1.0,
+          "options": [
+            {
+              "en": "Off",
+              "de": "Aus"
+            },
+            {
+              "en": "On",
+              "de": "An"
+            }
+          ]
+        },
+        {
+          "id": "glow",
+          "name": {
+            "en": "Glow",
+            "de": "Leuchten"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "halo",
+      "shader": "halo",
+      "category": "spectrum",
+      "palette": "vapor",
+      "cost": 0.8,
+      "name": {
+        "en": "Halo",
+        "de": "Halo"
+      },
+      "description": {
+        "en": "A ring of spectrum bars around a pulsing nebula core.",
+        "de": "Ein Ring aus Spektrumbalken um einen pulsierenden Nebelkern."
+      },
+      "params": [
+        {
+          "id": "bars",
+          "name": {
+            "en": "Bars",
+            "de": "Balken"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "particles",
+          "name": {
+            "en": "Particles",
+            "de": "Partikel"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "pulse",
+          "name": {
+            "en": "Core pulse",
+            "de": "Kernpuls"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "outrun",
+      "shader": "outrun",
+      "category": "worlds",
+      "palette": "sunset",
+      "cost": 1.0,
+      "name": {
+        "en": "Outrun",
+        "de": "Outrun"
+      },
+      "description": {
+        "en": "A synthwave sunset with equaliser mountains and an endless grid.",
+        "de": "Synthwave-Sonnenuntergang mit Equalizer-Bergen und endlosem Gitter."
+      },
+      "params": [
+        {
+          "id": "speed",
+          "name": {
+            "en": "Speed",
+            "de": "Tempo"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "sun",
+          "name": {
+            "en": "Sun size",
+            "de": "Sonnengröße"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "grid",
+          "name": {
+            "en": "Grid glow",
+            "de": "Gitterleuchten"
+          },
+          "default": 0.3
+        }
+      ]
+    },
+    {
+      "id": "hyperspace",
+      "shader": "hyperspace",
+      "category": "worlds",
+      "palette": "vapor",
+      "cost": 1.4,
+      "feedback": false,
+      "tonemap": false,
+      "name": {
+        "en": "Hyperspace",
+        "de": "Hyperraum"
+      },
+      "description": {
+        "en": "Stars streak past at lightspeed, faster with every kick.",
+        "de": "Sterne rasen in Lichtgeschwindigkeit vorbei, schneller mit jedem Kick."
+      },
+      "params": [
+        {
+          "id": "speed",
+          "name": {
+            "en": "Speed",
+            "de": "Tempo"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "stars",
+          "name": {
+            "en": "Star density",
+            "de": "Sternendichte"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "nebula",
+          "name": {
+            "en": "Nebula",
+            "de": "Nebel"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "tunnel",
+      "shader": "neon_tunnel",
+      "category": "worlds",
+      "palette": "neon",
+      "cost": 1.0,
+      "name": {
+        "en": "Tunnel",
+        "de": "Tunnel"
+      },
+      "description": {
+        "en": "Race through an endless neon tunnel whose walls light up with the music.",
+        "de": "Flug durch einen endlosen Neon-Tunnel, dessen Wände mit der Musik aufleuchten."
+      },
+      "params": [
+        {
+          "id": "speed",
+          "name": {
+            "en": "Speed",
+            "de": "Tempo"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "twist",
+          "name": {
+            "en": "Twist",
+            "de": "Drall"
+          },
+          "default": 0.3
+        },
+        {
+          "id": "panels",
+          "name": {
+            "en": "Panels",
+            "de": "Paneele"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "silk",
+      "shader": "silk",
+      "category": "generative",
+      "palette": "vapor",
+      "cost": 0.7,
+      "name": {
+        "en": "Silk",
+        "de": "Seide"
+      },
+      "description": {
+        "en": "Ribbons of light that twist and flow with the music, flaring on the beat.",
+        "de": "Lichtbänder, die sich mit der Musik drehen und fließen und im Takt aufleuchten."
+      },
+      "params": [
+        {
+          "id": "ribbons",
+          "name": {
+            "en": "Ribbons",
+            "de": "Bänder"
+          },
+          "default": 0.45
+        },
+        {
+          "id": "flow",
+          "name": {
+            "en": "Flow",
+            "de": "Fluss"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "sheen",
+          "name": {
+            "en": "Sheen",
+            "de": "Glanz"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "lasers",
+      "shader": "lasers",
+      "category": "generative",
+      "palette": "neon",
+      "cost": 1.2,
+      "name": {
+        "en": "Lasers",
+        "de": "Laser"
+      },
+      "description": {
+        "en": "A laser rig cutting to a new figure every few beats, with dust in the haze.",
+        "de": "Eine Laseranlage, die im Takt in neue Figuren springt, mit Staub im Nebel."
+      },
+      "params": [
+        {
+          "id": "beams",
+          "name": {
+            "en": "Beams per fan",
+            "de": "Strahlen je Fächer"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "haze",
+          "name": {
+            "en": "Haze",
+            "de": "Nebel"
+          },
+          "default": 0.6
+        },
+        {
+          "id": "sweep",
+          "name": {
+            "en": "Sweep speed",
+            "de": "Schwenktempo"
+          },
+          "default": 0.4
+        }
+      ]
+    },
+    {
+      "id": "veins",
+      "shader": "veins",
+      "category": "generative",
+      "palette": "neon",
+      "cost": 1.0,
+      "name": {
+        "en": "Veins",
+        "de": "Adern"
+      },
+      "description": {
+        "en": "Glowing veins cracking a dark surface: they drift with the music and snap into a new shape on every beat.",
+        "de": "Leuchtende Adern in einer dunklen Fläche: Sie fließen mit der Musik und springen im Takt in eine neue Form."
+      },
+      "params": [
+        {
+          "id": "flow",
+          "name": {
+            "en": "Flow",
+            "de": "Fluss"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "jumps",
+          "name": {
+            "en": "Beat jumps",
+            "de": "Takt-Sprünge"
+          },
+          "default": 0.7
+        },
+        {
+          "id": "glow",
+          "name": {
+            "en": "Glow",
+            "de": "Leuchten"
+          },
+          "default": 0.5
+        }
+      ]
+    },
+    {
+      "id": "galaxy",
+      "shader": "galaxy",
+      "category": "worlds",
+      "palette": "ice",
+      "cost": 1.0,
+      "name": {
+        "en": "Galaxy",
+        "de": "Galaxie"
+      },
+      "description": {
+        "en": "A spiral galaxy whose arms light up band by band.",
+        "de": "Eine Spiralgalaxie, deren Arme Band für Band aufleuchten."
+      },
+      "params": [
+        {
+          "id": "arms",
+          "name": {
+            "en": "Arms",
+            "de": "Arme"
+          },
+          "default": 0.3
+        },
+        {
+          "id": "tilt",
+          "name": {
+            "en": "Tilt",
+            "de": "Neigung"
+          },
+          "default": 0.4
+        },
+        {
+          "id": "rotation",
+          "name": {
+            "en": "Rotation",
+            "de": "Rotation"
+          },
+          "default": 0.4
+        }
+      ]
+    },
+    {
+      "id": "bokeh",
+      "shader": "bokeh",
+      "category": "generative",
+      "palette": "sunset",
+      "cost": 0.8,
+      "name": {
+        "en": "Bokeh",
+        "de": "Bokeh"
+      },
+      "description": {
+        "en": "Out-of-focus city lights, each one pulsing to its own band.",
+        "de": "Unscharfe Stadtlichter, jedes pulsiert zu seinem eigenen Frequenzband."
+      },
+      "params": [
+        {
+          "id": "size",
+          "name": {
+            "en": "Light size",
+            "de": "Lichtgröße"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "density",
+          "name": {
+            "en": "Density",
+            "de": "Dichte"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "drift",
+          "name": {
+            "en": "Drift",
+            "de": "Drift"
+          },
+          "default": 0.3
+        }
+      ]
+    },
+    {
+      "id": "pulsar",
+      "shader": "pulsar",
+      "category": "spectrum",
+      "palette": "ice",
+      "cost": 1.2,
+      "name": {
+        "en": "Pulsar",
+        "de": "Pulsar"
+      },
+      "description": {
+        "en": "The Unknown Pleasures cover, drawn live from the last seconds of music.",
+        "de": "Das „Unknown Pleasures“-Cover, live aus den letzten Sekunden Musik gezeichnet."
+      },
+      "params": [
+        {
+          "id": "lines",
+          "name": {
+            "en": "Ridges",
+            "de": "Linien"
+          },
+          "default": 0.45
+        },
+        {
+          "id": "height",
+          "name": {
+            "en": "Height",
+            "de": "Höhe"
+          },
+          "default": 0.5
+        },
+        {
+          "id": "colour",
+          "name": {
+            "en": "Colour",
+            "de": "Farbe"
+          },
+          "default": 0.0
+        }
+      ]
+    }
+  ]
+}

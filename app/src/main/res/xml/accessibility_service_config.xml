@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Window state changes tell which app is in front; focus/scroll/click events only tell that the
+     remote is in use there (for re-offering focus without interrupting). No window content, no key
+     filtering. The accessibility button (on TVs: the accessibility shortcut, hold Back + ▼) brings the
+     preview's focus back. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeViewFocused|typeViewSelected|typeViewScrolled|typeViewClicked"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault|flagRequestAccessibilityButton"
+    android:canRetrieveWindowContent="false"
+    android:canPerformGestures="false"
+    android:description="@string/accessibility_service_description"
+    android:notificationTimeout="100" />
