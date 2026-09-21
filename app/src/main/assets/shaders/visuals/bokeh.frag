@@ -12,6 +12,9 @@ void main() {
     vec2 p = vec2(uv.x * aspect, uv.y);
     vec3 col = mix(vec3(0.01, 0.01, 0.025), pal(0.7) * 0.06, uv.y);
 
+    float sizeScale = mix(0.6, 1.3, uParam.x);
+    // Largest radius a light can reach (size, loudest band, top of its pulse) plus the edge ring.
+    float maxReach = 0.42 * sizeScale * 1.4 + 0.12;
     for (int l = 0; l < 2; l++) {
         float fl = float(l);
         float cells = mix(4.0, 9.0, uParam.y) + fl * 3.0;
@@ -26,10 +29,13 @@ void main() {
                 if (h.x > 0.62) continue;
                 vec2 centre = id + h;
                 vec2 f = g - centre;
+                // Most neighbours are out of reach even at their largest: skip them before the spectrum
+                // fetch and the sine.
+                if (dot(f, f) > maxReach * maxReach) continue;
                 float band = spec(fract(h.y * 5.3) * 0.85);
                 // Each light breathes with its band and blinks in its own slow rhythm.
                 float pulse = 0.75 + 0.25 * sin(uTime * (0.5 + 1.5 * h.x) + h.y * 30.0);
-                float radius = (0.2 + 0.22 * fract(h.x * 9.1)) * mix(0.6, 1.3, uParam.x) * (0.7 + 0.7 * band) * pulse;
+                float radius = (0.2 + 0.22 * fract(h.x * 9.1)) * sizeScale * (0.7 + 0.7 * band) * pulse;
                 if (dot(f, f) > (radius + 0.12) * (radius + 0.12)) continue;
                 float d = hexagon(rot(h.x * 3.0 + uTime * 0.05) * f, radius);
                 float disc = smoothstep(0.03, -0.02, d);

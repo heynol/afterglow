@@ -41,12 +41,15 @@
         android:theme="@style/Theme.Afterglow"
         tools:ignore="GoogleAppIndexingWarning">
 
+        <!-- Launcher entry and ★-key target: summons the visualizer inside YouTube, else opens the
+             settings. Own empty task affinity, so it never brings the settings task forward. -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.LaunchActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
-            android:launchMode="singleTop"
-            android:screenOrientation="landscape"
-            tools:ignore="DiscouragedApi">
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Afterglow.NoDisplay">
             <!-- Leanback only: with the plain LAUNCHER category as well, Google TV lists the app twice,
                  once as a TV app and once under the phone apps. -->
             <intent-filter>
@@ -54,6 +57,14 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Exported for the adb test hook (see MainActivity); not in the launcher. -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="landscape"
+            tools:ignore="DiscouragedApi" />
 
         <activity
             android:name=".ui.VisualsActivity"

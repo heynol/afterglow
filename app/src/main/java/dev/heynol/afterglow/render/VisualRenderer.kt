@@ -9,6 +9,7 @@ import android.opengl.GLES30
 import android.view.Surface
 import android.os.Handler
 import android.os.HandlerThread
+import android.view.Choreographer
 import android.util.Log
 import dev.heynol.afterglow.audio.AudioAnalyzer
 import dev.heynol.afterglow.audio.AudioFeatures
@@ -71,7 +72,9 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
     private var running = false
     private var frameScheduled = false
     private var lastFrameNanos = 0L
-    private var submitNanos = 4_000_000L
+    // Display refresh period, learned from consecutive vsync callbacks (TVs switch to 50 Hz too).
+    private var vsyncNanos = 16_666_667L
+    private var lastVsyncNanos = 0L
     private val governor = ResolutionGovernor()
     private var autoFrameRate = true
     private var targetFps = 60
@@ -97,7 +100,16 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
     @Volatile private var flash = 0.35f
     @Volatile private var delayNanos = 0L
 
-    private val frameRunnable = Runnable { onFrame(System.nanoTime()) }
+    private val frameRunnable = Runnable { onFrame(System.nanoTime(), onVsync = false) }
+
+    // Created on the render thread, whose looper it runs on.
+    private val choreographer: Choreographer by lazy { Choreographer.getInstance() }
+    private val vsyncCallback = Choreographer.FrameCallback { vsync ->
+        val gap = vsync - lastVsyncNanos
+        if (lastVsyncNanos != 0L && gap in 5_000_000L..vsyncNanos * 3 / 2) vsyncNanos = (vsyncNanos * 7 + gap) / 8
+        lastVsyncNanos = vsync
+        onFrame(vsync, onVsync = true)
+    }
 
     fun setMaxOutputHeight(height: Int) {
         maxOutputHeight = height
@@ -227,7 +239,7 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
         running = run
         if (run) {
             lastFrameNanos = 0L
-            submitNanos = 4_000_000L
+            lastVsyncNanos = 0L
             adaptStart = 0L
             adaptFrames = 0
             scheduleFrame()
@@ -351,21 +363,21 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
         handler.post(frameRunnable)
     }
 
-    private fun onFrame(frameTimeNanos: Long) {
+    private fun onFrame(frameTimeNanos: Long, onVsync: Boolean) {
         frameScheduled = false
         val core = egl ?: return
         val surface = window ?: return
         if (!running) return
-        // Paced by eglSwapBuffers, which blocks until the next vsync slot. Below the display's rate the
-        // rest of the interval is waited out first — minus how long drawing takes, or the frame would be
-        // submitted after its vsync and land a whole one later (33 ms turning into 50).
-        if (lastFrameNanos != 0L) {
-            val wait = lastFrameNanos + frameIntervalNanos - submitNanos - VSYNC_SLACK_NANOS - frameTimeNanos
-            if (wait > 0) {
-                frameScheduled = true
-                handler.postDelayed(frameRunnable, wait / 1_000_000L + 1)
-                return
-            }
+        // At the display's rate, eglSwapBuffers paces the loop: it blocks until a buffer is free. Below
+        // it, frames start on vsync callbacks, skipping those that come before a whole interval has
+        // passed: at 30 fps exactly every second one. Waiting on a timer instead drifted against the
+        // display and mixed one- and two-vsync frames (about 35 fps that judder).
+        if (frameIntervalNanos > vsyncNanos * 3 / 2 &&
+            (!onVsync || lastFrameNanos != 0L && frameTimeNanos - lastFrameNanos < frameIntervalNanos - vsyncNanos / 2)
+        ) {
+            frameScheduled = true
+            choreographer.postFrameCallback(vsyncCallback)
+            return
         }
         val dt = if (lastFrameNanos == 0L) 1f / 60f else ((frameTimeNanos - lastFrameNanos) / 1e9f).coerceIn(0.001f, 0.1f)
         lastFrameNanos = frameTimeNanos
@@ -418,9 +430,6 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
             present(l.present, fromTex.texture, outgoing?.def?.tonemap ?: cur.def.tonemap, curTex.texture, cur.def.tonemap, transition, opacity, frameTimeNanos, bufferWidth, bufferHeight, cornerRadius)
         }
 
-        val submitted = System.nanoTime()
-        // How long this frame took to build, smoothed: the pacing above needs to know in advance.
-        submitNanos = (submitNanos * 3 + (submitted - start)) / 4
         core.swap(surface)
         val frameNanos = System.nanoTime() - start
         // Cross-fades render two visuals, and resizes reallocate the buffer: neither is a fair measurement.
@@ -480,17 +489,31 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 3)
     }
 
-    /** Resolution level that last worked per visual and output size, so switching back starts there. */
+    /**
+     * Resolution level and, in automatic mode, frame rate that last worked per visual and output size,
+     * so switching back starts there. The rate belongs to the visual: one heavy visual dropping to 30
+     * must not hold every following one at 30.
+     */
     private val levelMemory = HashMap<String, Int>()
+    private val rateMemory = HashMap<String, Int>()
 
     private fun levelKey(): String? = current?.let { "${it.def.id}@$outHeight" }
 
     private fun rememberLevel() {
-        levelKey()?.let { levelMemory[it] = governor.index }
+        val key = levelKey() ?: return
+        levelMemory[key] = governor.index
+        if (autoFrameRate) rateMemory[key] = targetFps
     }
 
     private fun restoreLevel() {
-        governor.reset(levelKey()?.let { levelMemory[it] } ?: governor.index)
+        val key = levelKey()
+        governor.reset(key?.let { levelMemory[it] } ?: governor.index)
+        if (autoFrameRate) {
+            targetFps = key?.let { rateMemory[it] } ?: 60
+            frameIntervalNanos = 1_000_000_000L / targetFps
+            slowWindows = 0
+            fastWindows = 0
+        }
     }
 
     /** Feeds one-second frame-rate windows to the governor; windows spanning a buffer resize don't count. */
@@ -523,9 +546,14 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
      */
     private fun chooseFrameRate(fps: Float) {
         if (targetFps == 60) {
-            slowWindows = if (governor.index == 0 && fps < 48f) slowWindows + 1 else 0
-            if (slowWindows >= 3) {
-                Log.i(TAG, "${current?.def?.id}: 60 fps out of reach at the lowest resolution, switching to 30")
+            // Two cases trade frames for sharpness: 60 is out of reach even at the lowest resolution, or
+            // it only holds at the two coarsest levels, a picture too soft to be worth the frames. The
+            // second spares feedback visuals: their motion is per frame, so at 30 they'd run at half speed.
+            val outOfReach = governor.index == 0 && fps < 48f
+            val coarse = governor.index <= COARSE_LEVEL && !governor.conservative
+            slowWindows = if (outOfReach || coarse) slowWindows + 1 else 0
+            if (slowWindows >= (if (outOfReach) 3 else 6)) {
+                Log.i(TAG, "${current?.def?.id}: 60 fps only at the lowest resolution (%.0f fps), switching to 30".format(fps))
                 targetFps = 30
                 frameIntervalNanos = 1_000_000_000L / 30
                 slowWindows = 0
@@ -533,6 +561,7 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
                 governor.reset()
             }
         } else {
+            // Back to 60 only with the full resolution to spare; anything less would flip straight back.
             fastWindows = if (governor.index >= HIGH_LEVEL && fps > 29.4f) fastWindows + 1 else 0
             if (fastWindows >= 8) {
                 Log.i(TAG, "${current?.def?.id}: 30 fps has room to spare, trying 60 again")
@@ -610,9 +639,9 @@ class VisualRenderer(context: Context, name: String, private val analyzer: () ->
         val DEFAULT_COLOR = intArrayOf(GLES30.GL_COLOR)
 
         /** From this resolution level upwards, 30 fps is comfortable enough to try 60 again. */
-        const val HIGH_LEVEL = 5
+        const val HIGH_LEVEL = 7
+        const val COARSE_LEVEL = 1
         const val MIN_VISUAL_SCALE = 0.2f
-        const val VSYNC_SLACK_NANOS = 4_000_000L
         const val MIN_HEIGHT = 144
     }
 }

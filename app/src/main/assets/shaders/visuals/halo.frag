@@ -25,7 +25,6 @@ void main() {
     float px = 2.0 / uRes.y;
     float radial = smoothstep(baseR - px, baseR + px, r) * smoothstep(baseR + len + px, baseR + len - px, r);
     float along = clamp((r - baseR) / max(len, 1e-3), 0.0, 1.0);
-    vec3 barCol = pal(f * 0.7 + uTime * 0.02) * (0.7 + 0.8 * along);
     float bars = radial * barMask;
 
     // Glow halo around the bar ring
@@ -66,10 +65,11 @@ void main() {
     vec3 col = bg;
     col += pal(0.1 + uTime * 0.02) * halo;
     col = mix(col, core, inCore);
-    col += pal(0.3) * rim * 0.5;
-    col += pal(0.8 + uTime * 0.02) * waveLine * 0.9;
-    col += barCol * bars;
-    col += pal(rnd.y + uTime * 0.03) * spark;
+    // Rim, waveform, bars and sparks are thin: only pay for their colour where they actually light up.
+    if (rim > 0.002) col += pal(0.3) * rim * 0.5;
+    if (waveLine > 0.002) col += pal(0.8 + uTime * 0.02) * waveLine * 0.9;
+    if (bars > 0.0) col += pal(f * 0.7 + uTime * 0.02) * (0.7 + 0.8 * along) * bars;
+    if (spark > 0.0) col += pal(rnd.y + uTime * 0.03) * spark;
     col += vec3(1.0) * uBeat * uFlash * 0.04 * exp(-r);
     col *= vignette(uv, 0.3);
     fragColor = vec4(tonemap(col * 1.2), 1.0);

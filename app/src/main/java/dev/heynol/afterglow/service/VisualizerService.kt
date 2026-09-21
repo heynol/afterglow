@@ -318,12 +318,25 @@ class VisualizerService : AccessibilityService() {
         private const val REMOTE_IDLE_MS = 4000L
         private const val PROJECTION_LINGER_MS = 30_000L
         private const val GUESS_INTERVAL_MS = 3_000L
+        private const val SUMMON_DELAY_MS = 300L
         private val TEST_CLIENT = Any()
 
         @Volatile
         private var instance: WeakReference<VisualizerService>? = null
 
         val isRunning: Boolean get() = instance?.get() != null
+
+        /**
+         * The launcher entry was opened (e.g. with the ★ key): inside an enabled app this acts like the
+         * accessibility shortcut. False when there is no session, so the caller opens the settings.
+         */
+        fun summon(): Boolean {
+            val service = instance?.get() ?: return false
+            if (!service.policy.active) return false
+            // Once the launching activity is gone and the app has the focus again.
+            service.handler.postDelayed({ service.onShortcut() }, SUMMON_DELAY_MS)
+            return true
+        }
 
         /** Shows the overlay with the demo loop over whatever is on screen. False if the service is off. */
         fun test(): Boolean {

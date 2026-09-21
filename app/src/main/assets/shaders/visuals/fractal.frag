@@ -8,7 +8,10 @@
 
 vec3 dive(vec2 p, float zoom, float fold, mat2 turn, int iters, float glowWidth, float hue, float pixel) {
     vec2 z = p * zoom;
-    vec3 col = vec3(0.0);
+    // Brightness and its palette position are summed per fold and the palette looked up once at the
+    // end: a palette call per fold was most of the cost.
+    float glow = 0.0;
+    float shade = 0.0;
     float scale = zoom;
     for (int i = 0; i < 12; i++) {
         if (i >= iters) break;
@@ -24,9 +27,11 @@ vec3 dive(vec2 p, float zoom, float fold, mat2 turn, int iters, float glowWidth,
         // Orbit trap: how close this fold brings the point to the axes. Rescaling keeps z bounded, so
         // the trap stays a thin line in every octave.
         float trap = min(abs(z.x), abs(z.y));
-        col += pal(hue + float(i) * 0.06) * exp(-trap / w) * sqrt(glowWidth / w) / (1.0 + float(i) * 0.6);
+        float g = exp(-trap / w) * sqrt(glowWidth / w) / (1.0 + float(i) * 0.6);
+        glow += g;
+        shade += g * float(i);
     }
-    return col;
+    return pal(hue + 0.06 * shade / max(glow, 1e-4)) * glow;
 }
 
 void main() {

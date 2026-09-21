@@ -124,8 +124,6 @@
     <string name="overlay_all_visuals">ALLE VISUALISIERUNGEN</string>
     <string name="overlay_now_playing">Läuft</string>
     <string name="overlay_now_playing_track">♪  JETZT LÄUFT</string>
-    <string name="overlay_chip_open">OK · Vollbild</string>
-    <string name="overlay_chip_close">OK · Ausblenden</string>
     <string name="overlay_index">%1$d / %2$d</string>
     <string name="overlay_hints">◀ ▶ Wechseln  ·  ▼ Alle  ·  ▲ Minimieren  ·  OK Info</string>
 </resources>

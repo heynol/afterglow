@@ -20,8 +20,8 @@ import kotlin.math.max
  *
  * The visual lives in [stage], a full-screen SurfaceView that is scaled and moved into the corner for
  * the mini preview. Morphing between mini and full screen is therefore a pure view transform: no
- * window resize, no surface recreation, no flicker. Chrome around the preview (focus ring, X, hint
- * chip) and the full-screen HUD (visual name, song, hints, carousel) sit above it.
+ * window resize, no surface recreation, no flicker. Chrome around the preview (focus ring, X) and
+ * the full-screen HUD (visual name, song, hints, carousel) sit above it.
  */
 class OverlayLayout(context: Context) : FrameLayout(context) {
 
@@ -33,7 +33,6 @@ class OverlayLayout(context: Context) : FrameLayout(context) {
     val stage = FrameLayout(context)
     val ring = FocusRingView(context)
     val close = CloseButtonView(context)
-    val chip = label(context, 14f, OverlayColors.TEXT, bold = true)
 
     val nameToast = LinearLayout(context)
     val toastCategory = label(context, 13f, OverlayColors.TEXT_SECONDARY, bold = true)
@@ -104,9 +103,6 @@ class OverlayLayout(context: Context) : FrameLayout(context) {
 
         addView(ring, LayoutParams(0, 0))
         addView(close, LayoutParams(dpi(44f), dpi(44f)))
-        chip.background = pill(context, OverlayColors.SURFACE, dp(14f))
-        chip.setPadding(dpi(12f), dpi(6f), dpi(12f), dpi(6f))
-        addView(chip, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
 
         nameToast.orientation = LinearLayout.VERTICAL
         nameToast.gravity = Gravity.CENTER_HORIZONTAL
@@ -147,7 +143,6 @@ class OverlayLayout(context: Context) : FrameLayout(context) {
 
         ring.visibility = INVISIBLE
         close.visibility = INVISIBLE
-        chip.visibility = INVISIBLE
         for (v in listOf(nameToast, trackCard, hints, carousel)) {
             v.alpha = 0f
             v.visibility = INVISIBLE
@@ -193,20 +188,7 @@ class OverlayLayout(context: Context) : FrameLayout(context) {
         close.pivotX = cs / 2f
         close.pivotY = cs / 2f
 
-        layoutChip()
         applyTransforms()
-    }
-
-    /** Re-positions the hint chip after its text changed. */
-    fun layoutChip() {
-        if (mini.isEmpty) return
-        chip.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
-        val cw = chip.measuredWidth
-        val ch = chip.measuredHeight
-        val x = (mini.centerX() - cw / 2f).toInt()
-        val below = corner == Corner.TOP_LEFT || corner == Corner.TOP_RIGHT
-        val y = if (below) (mini.bottom + dp(16f)).toInt() else (mini.top - dp(16f) - ch).toInt()
-        chip.layout(x, y, x + cw, y + ch)
     }
 
     private fun applyTransforms() {
@@ -238,14 +220,12 @@ class OverlayLayout(context: Context) : FrameLayout(context) {
         ring.ringScale = ringScale
         ring.presence = chrome
         close.alpha = chrome
-        chip.alpha = chrome
         val visibility = if (chrome > 0f) VISIBLE else INVISIBLE
         ring.visibility = visibility
         close.visibility = visibility
-        chip.visibility = visibility
     }
 
-    /** Focus chrome (ring, X, hint chip), 0..1; only shown while the preview holds the remote. */
+    /** Focus chrome (ring, X), 0..1; only shown while the preview holds the remote. */
     var focusChrome = 0f
         set(value) {
             field = value

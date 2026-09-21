@@ -5,15 +5,16 @@
 // Rays only march inside a bounding sphere, and the silhouette is anti-aliased from the closest
 // approach of rays that miss, so the edge stays smooth at reduced resolution.
 
-float gBand[6];
+// Six bands in two vectors: indexing a local array with a varying index spills it to memory on
+// Mali, and this runs for every march step.
+vec3 gBandA, gBandB;
 
 float bandAt(float lat) {
     float x = clamp(lat, 0.0, 1.0) * 5.0;
-    float i = floor(x);
-    float f = x - i;
-    f = f * f * (3.0 - 2.0 * f);
-    int a = int(i);
-    return mix(gBand[a], gBand[min(a + 1, 5)], f);
+    // Smoothstep weights of neighbouring bands add up to one: the same blend as mixing the two.
+    vec3 wA = 1.0 - smoothstep(0.0, 1.0, abs(x - vec3(0.0, 1.0, 2.0)));
+    vec3 wB = 1.0 - smoothstep(0.0, 1.0, abs(x - vec3(3.0, 4.0, 5.0)));
+    return dot(wA, gBandA) + dot(wB, gBandB);
 }
 
 float map(vec3 p) {
@@ -60,7 +61,8 @@ vec3 environment(vec3 d) {
 void main() {
     vec2 uv = gl_FragCoord.xy / uRes;
     vec2 p = centered(gl_FragCoord.xy);
-    for (int i = 0; i < 6; i++) gBand[i] = spec((float(i) + 0.5) / 6.0 * 0.85);
+    gBandA = vec3(spec(0.5 / 6.0 * 0.85), spec(1.5 / 6.0 * 0.85), spec(2.5 / 6.0 * 0.85));
+    gBandB = vec3(spec(3.5 / 6.0 * 0.85), spec(4.5 / 6.0 * 0.85), spec(5.5 / 6.0 * 0.85));
 
     float spin = uMotion * mix(0.05, 0.4, uParam.z);
     vec3 ro = vec3(3.2 * sin(spin), 0.4 * sin(uMotion * 0.1), 3.2 * cos(spin));

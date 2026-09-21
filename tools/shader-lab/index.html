@@ -212,6 +212,56 @@ function palette(v) {
   return catalog.palettes.find((p) => p.id === id).colors.map(hex);
 }
 
+// vnoise() reads hash12() values from a 256×256 lattice texture, filled like the app does (Pipeline.kt).
+let noiseTex = null;
+function noiseTexture() {
+  if (noiseTex) return noiseTex;
+  const fr = (x) => x - Math.floor(x);
+  const f32 = Math.fround;
+  const data = new Float32Array(256 * 256);
+  for (let y = 0; y < 256; y++) {
+    for (let x = 0; x < 256; x++) {
+      let a = f32(fr(f32(x * 0.1031))), b = f32(fr(f32(y * 0.1031))), c = a;
+      const d = f32(a * (b + 33.33) + b * (c + 33.33) + c * (a + 33.33));
+      a = f32(a + d); b = f32(b + d); c = f32(c + d);
+      data[y * 256 + x] = fr(f32((a + b) * c));
+    }
+  }
+  const active = gl.getParameter(gl.ACTIVE_TEXTURE);
+  gl.activeTexture(gl.TEXTURE7);
+  noiseTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, 256, 256, 0, gl.RED, gl.FLOAT, data);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  gl.activeTexture(active);
+  return noiseTex;
+}
+
+// pal() reads the palette gradient from a 256×1 texture, baked like the app does (Pipeline.kt).
+const paletteTextures = new Map();
+function paletteTexture(cols) {
+  const key = JSON.stringify(cols);
+  let tex = paletteTextures.get(key);
+  if (tex) return tex;
+  const data = new Float32Array(256 * 4);
+  for (let i = 0; i < 256; i++) {
+    const c = palSample(cols, (i + 0.5) / 256);
+    data.set([c[0], c[1], c[2], 1], i * 4);
+  }
+  tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, 256, 1, 0, gl.RGBA, gl.FLOAT, data);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  paletteTextures.set(key, tex);
+  return tex;
+}
+
 function palSample(cols, t) {
   t = ((t % 1) + 1) % 1 * 4;
   const i = Math.floor(t);
@@ -274,6 +324,8 @@ function renderVisual(v, inst, t, dt, frame) {
   if (!prog) return inst.a;
   const speed = +$('speed').value, react = +$('react').value;
   const cols = palette(v);
+  // Created before any binding below: creating it binds it on the active unit.
+  const palTex = paletteTexture(cols);
   inst.motion += dt * speed * (0.4 + 0.9 * A.energy + 0.5 * A.level);
   const time = t * speed;
   const out = inst.b;
@@ -305,6 +357,8 @@ function renderVisual(v, inst, t, dt, frame) {
   bindTex('uAudio', 0, audioTex);
   bindTex('uHistory', 1, histTex);
   bindTex('uPrev', 2, prevTex);
+  bindTex('uPalTex', 3, palTex);
+  bindTex('uNoise', 4, noiseTexture());
   gl.bindVertexArray(vao);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   };

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.SystemClock
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 
 /**
@@ -23,6 +24,8 @@ class ForegroundAppTracker(private val context: Context, private val onChanged: 
     var lastInteraction = 0L
         private set
 
+    private var changedAt = 0L
+
     private val launchable = HashMap<String, Boolean>()
     private val homes: Set<String> by lazy {
         val pm = context.packageManager
@@ -34,10 +37,19 @@ class ForegroundAppTracker(private val context: Context, private val onChanged: 
         val pkg = event.packageName?.toString() ?: return
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                if (pkg != foreground && !isTransient(pkg)) {
-                    foreground = pkg
-                    onChanged(pkg)
+                if (pkg == foreground || isTransient(pkg)) return
+                val now = SystemClock.uptimeMillis()
+                // The launcher still reports its window while an app it just started opens on top.
+                // YouTube sends nothing after its first window, so taking that late report as "back
+                // home" would end the session for good.
+                if (pkg in homes && foreground != null && foreground !in homes && now - changedAt < STALE_HOME_MS) {
+                    Log.i(TAG, "ignoring late $pkg window after $foreground opened")
+                    return
                 }
+                Log.i(TAG, "foreground: $pkg")
+                foreground = pkg
+                changedAt = now
+                onChanged(pkg)
             }
             AccessibilityEvent.TYPE_VIEW_FOCUSED, AccessibilityEvent.TYPE_VIEW_SELECTED,
             AccessibilityEvent.TYPE_VIEW_SCROLLED, AccessibilityEvent.TYPE_VIEW_CLICKED -> {
@@ -69,6 +81,9 @@ class ForegroundAppTracker(private val context: Context, private val onChanged: 
     }
 
     private companion object {
+        const val TAG = "ForegroundAppTracker"
+        const val STALE_HOME_MS = 2_000L
+
         val KNOWN_HOMES = setOf(
             "com.google.android.apps.tv.launcherx",
             "com.google.android.tvlauncher",

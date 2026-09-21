@@ -342,8 +342,6 @@ class OverlayController(
         layout.close.setFocusedState(onClose)
         // Only one thing looks focused: the ring steps back while the X is selected.
         layout.ring.animate().alpha(if (onClose) 0f else 1f).setDuration(150).start()
-        layout.chip.text = service.getString(if (onClose) R.string.overlay_chip_close else R.string.overlay_chip_open)
-        layout.layoutChip()
     }
 
     /** The preview timer, if one is set: the ring runs down, then the preview hides until the next song. */

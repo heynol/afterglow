@@ -10,6 +10,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import kotlin.math.exp
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -73,10 +74,14 @@ class ShaderLibrary(private val assets: AssetManager) {
     }
 }
 
-/** Per-frame audio uploads: the 512x4 spectrum/waveform texture and the spectrum history ring. */
+/**
+ * Textures every visual reads: the per-frame 512x5 spectrum/waveform texture, the spectrum history ring,
+ * and the fixed lattice of random values behind vnoise().
+ */
 class AudioTextures {
     val audio: Int
     val history: Int
+    val noise: Int
     var historyHead = 0
         private set
 
@@ -92,10 +97,17 @@ class AudioTextures {
     private var accumulator = 0f
 
     init {
-        val ids = IntArray(2)
-        GLES30.glGenTextures(2, ids, 0)
+        val ids = IntArray(3)
+        GLES30.glGenTextures(3, ids, 0)
         audio = ids[0]
         history = ids[1]
+        noise = ids[2]
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, noise)
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_R16F, NOISE_SIZE, NOISE_SIZE, 0, GLES30.GL_RED, GLES30.GL_FLOAT, noiseLattice())
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_REPEAT)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_REPEAT)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, audio)
         GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_R16F, AudioFeatures.BINS, AUDIO_ROWS, 0, GLES30.GL_RED, GLES30.GL_FLOAT, null)
         Gl.linearClamp()
@@ -149,9 +161,33 @@ class AudioTextures {
         }
     }
 
-    fun release() = GLES30.glDeleteTextures(2, intArrayOf(audio, history), 0)
+    fun release() = GLES30.glDeleteTextures(3, intArrayOf(audio, history, noise), 0)
+
+    /**
+     * hash12() of common.glsl at every lattice point, so the texture-based vnoise() draws the same
+     * patterns the arithmetic one did (repeating every 256 units). Float math like the shader's.
+     */
+    private fun noiseLattice(): FloatBuffer {
+        val out = ByteBuffer.allocateDirect(NOISE_SIZE * NOISE_SIZE * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
+        fun fract(x: Float) = x - floor(x)
+        for (y in 0 until NOISE_SIZE) {
+            for (x in 0 until NOISE_SIZE) {
+                var a = fract(x * 0.1031f)
+                var b = fract(y * 0.1031f)
+                var c = fract(x * 0.1031f)
+                val d = a * (b + 33.33f) + b * (c + 33.33f) + c * (a + 33.33f)
+                a += d
+                b += d
+                c += d
+                out.put(fract((a + b) * c))
+            }
+        }
+        out.flip()
+        return out
+    }
 
     companion object {
+        const val NOISE_SIZE = 256
         const val HISTORY_BINS = 128
         const val HISTORY_ROWS = 96
         const val HISTORY_RATE = 30f
@@ -199,6 +235,8 @@ class VisualInstance(val def: VisualDef, var style: VisualStyle) {
     private var motion = 0f
     private val palette = FloatArray(12)
     private val color = FloatArray(3)
+    private var paletteTexture = 0
+    private var paletteBaked: FloatArray? = null
 
     val width get() = a?.width ?: 0
     val height get() = a?.height ?: 0
@@ -277,10 +315,12 @@ class VisualInstance(val def: VisualDef, var style: VisualStyle) {
         p.f1("uHistHead", tex.historyHead.toFloat())
         p.f1("uHistPhase", tex.historyPhase)
         p.f3v("uPal", palette, 4)
+        p.texture("uPalTex", 3, paletteTexture())
         p.f4("uParam", style.params)
         p.texture("uAudio", 0, tex.audio)
         p.texture("uHistory", 1, tex.history)
         p.texture("uPrev", 2, prevTexture)
+        p.texture("uNoise", 4, tex.noise)
         GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 3)
     }
 
@@ -309,12 +349,48 @@ class VisualInstance(val def: VisualDef, var style: VisualStyle) {
         GLES30.glDisable(GLES30.GL_BLEND)
     }
 
+    /** The palette's gradient as a 256×1 texture for pal(), re-baked when the style's palette changes. */
+    private fun paletteTexture(): Int {
+        val colors = style.palette.colors
+        if (paletteTexture != 0 && paletteBaked?.contentEquals(colors) == true) return paletteTexture
+        if (paletteTexture == 0) {
+            val ids = IntArray(1)
+            GLES30.glGenTextures(1, ids, 0)
+            paletteTexture = ids[0]
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, paletteTexture)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_REPEAT)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE)
+        } else {
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, paletteTexture)
+        }
+        val data = ByteBuffer.allocateDirect(PALETTE_SIZE * 4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
+        for (i in 0 until PALETTE_SIZE) {
+            // Texel centres, so linear filtering between them reproduces the curve.
+            style.palette.sample((i + 0.5f) / PALETTE_SIZE, color)
+            data.put(color[0]).put(color[1]).put(color[2]).put(1f)
+        }
+        data.flip()
+        // Half floats: palettes may go past 1 for HDR highlights, and they filter linearly on ES 3.0.
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA16F, PALETTE_SIZE, 1, 0, GLES30.GL_RGBA, GLES30.GL_FLOAT, data)
+        paletteBaked = colors.copyOf()
+        return paletteTexture
+    }
+
     fun release() {
+        if (paletteTexture != 0) GLES30.glDeleteTextures(1, intArrayOf(paletteTexture), 0)
+        paletteTexture = 0
+        paletteBaked = null
         a?.release()
         b?.release()
         display?.release()
         a = null
         b = null
         display = null
+    }
+
+    private companion object {
+        const val PALETTE_SIZE = 256
     }
 }

@@ -43,9 +43,16 @@ void main() {
     float trap = 1e3;
     float ringTrap = 1e3;
     bool escaped = false;
+    // Inside the set the orbit settles into a cycle; once it comes back to a remembered point the pixel
+    // is known to be interior and the remaining iterations would change nothing but the cost. The
+    // blob-like species have large interiors, so this matters.
+    vec2 saved = z;
     for (int i = 0; i < 80; i++) {
         if (i >= maxIter) break;
         z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
+        vec2 dz = z - saved;
+        if (dot(dz, dz) < 1e-7) break;
+        if ((i & 7) == 7) saved = z;
         trap = min(trap, abs(z.x * z.y));
         ringTrap = min(ringTrap, abs(length(z) - 0.6));
         float m = dot(z, z);

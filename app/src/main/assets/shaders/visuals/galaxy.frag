@@ -24,7 +24,9 @@ void main() {
     float logr = log(max(r, 1e-3)) * wind;
     float spiral2 = a * 2.0 - logr + rotation * 2.0;
     float spiral4 = a * 4.0 - logr + rotation * 4.0;
-    float armDensity = mix(pow(0.5 + 0.5 * cos(spiral2), 3.0), pow(0.5 + 0.5 * cos(spiral4), 3.0), morph);
+    float arm2 = 0.5 + 0.5 * cos(spiral2);
+    float arm4 = 0.5 + 0.5 * cos(spiral4);
+    float armDensity = mix(arm2 * arm2 * arm2, arm4 * arm4 * arm4, morph);
     // Over minutes the arms dissolve into a smooth disk and wind themselves up again.
     float spiralAmount = 0.5 + 0.5 * sin(uMotion * 0.006);
     armDensity = mix(0.35, armDensity, 0.35 + 0.65 * spiralAmount);
@@ -52,8 +54,11 @@ void main() {
         }
 
         // Star-forming knots.
-        float knots = smoothstep(0.72, 0.92, vnoise(gr * 34.0)) * armDensity * disk;
-        col += mix(pal(0.9), vec3(1.0, 0.4, 0.65), 0.6) * knots * (0.6 + 1.2 * uTreble);
+        float knotRoom = armDensity * disk;
+        if (knotRoom > 0.01) {
+            float knots = smoothstep(0.72, 0.92, vnoise(gr * 34.0)) * knotRoom;
+            col += mix(pal(0.9), vec3(1.0, 0.4, 0.65), 0.6) * knots * (0.6 + 1.2 * uTreble);
+        }
     }
 
     // Density wave on the beat, running outward.

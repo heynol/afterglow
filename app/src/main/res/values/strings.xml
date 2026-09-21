@@ -125,8 +125,6 @@
     <string name="overlay_all_visuals">ALL VISUALIZATIONS</string>
     <string name="overlay_now_playing">Playing</string>
     <string name="overlay_now_playing_track">♪  NOW PLAYING</string>
-    <string name="overlay_chip_open">OK · Full screen</string>
-    <string name="overlay_chip_close">OK · Hide</string>
     <string name="overlay_index">%1$d / %2$d</string>
     <string name="overlay_hints">◀ ▶ Switch  ·  ▼ All  ·  ▲ Minimise  ·  OK Info</string>
 </resources>

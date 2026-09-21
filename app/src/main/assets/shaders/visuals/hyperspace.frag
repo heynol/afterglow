@@ -27,6 +27,8 @@ void main() {
         float along = smoothstep(-streak, 0.0, dz) * smoothstep(0.03, 0.0, dz);
         float angDist = abs(mod(a - starA + PI, TAU) - PI) * r;
         float width = (1.0 + 2.5 * r) / uRes.y;
+        // Most pixels of a cell lie beside its streak: stop before the colour there.
+        if (angDist >= width * 1.5 || dz < -streak || dz > 0.03) continue;
         float line = smoothstep(width * 1.5, 0.0, angDist);
         float bright = (0.4 + 0.6 * along) * along * smoothstep(0.03, 0.35, r) * (0.7 + 0.3 * fl);
         col += mix(vec3(1.0), pal(h.y * 3.0 + uTime * 0.02), 0.45) * line * bright * (1.0 + uTreble);

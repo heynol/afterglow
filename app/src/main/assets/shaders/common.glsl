@@ -33,6 +33,8 @@ uniform float uBeatCount;
 uniform float uEnergy;
 uniform float uMotion;
 uniform vec3 uPal[4];
+uniform sampler2D uPalTex;
+uniform sampler2D uNoise;
 uniform vec4 uParam;
 uniform float uFlash;
 
@@ -62,18 +64,13 @@ float hist(float x, float age) {
 }
 
 /**
- * Cyclic 4-stop gradient through the palette. Picked with weights instead of a computed index: indexing
- * a uniform array with a varying value is slow on mobile GPUs, and this runs many times per pixel.
+ * Cyclic 4-stop gradient through the palette, baked into a 256×1 texture per palette: one texture read
+ * instead of weighing four colours per call. Visuals call this many times per pixel, and on the TV GPU
+ * the arithmetic version cost a third of the frame in the heavier ones.
  */
 vec3 pal(float t) {
-    t = fract(t) * 4.0;
-    float i = floor(t);
-    float f = t - i;
-    f = f * f * (3.0 - 2.0 * f);
-    vec4 here = max(1.0 - abs(vec4(0.0, 1.0, 2.0, 3.0) - i), 0.0);
-    vec4 next = here.wxyz;
-    vec4 w = mix(here, next, f);
-    return uPal[0] * w.x + uPal[1] * w.y + uPal[2] * w.z + uPal[3] * w.w;
+    // fract() keeps the coordinate small: the texture unit wraps huge ones with too few bits.
+    return texture(uPalTex, vec2(fract(t), 0.5)).rgb;
 }
 
 mat2 rot(float a) {
@@ -93,12 +90,17 @@ vec2 hash22(vec2 p) {
     return fract((p3.xx + p3.yz) * p3.zy);
 }
 
+/**
+ * Value noise from a 256×256 lattice of hash12() values: the hardware's bilinear filter blends the four
+ * corners in one fetch, the smoothstep goes into the coordinate. Four hashes per call made noise-heavy
+ * visuals slow on the TV GPU.
+ */
 float vnoise(vec2 p) {
-    vec2 i = floor(p);
     vec2 f = fract(p);
+    // Wrapped to the lattice first: texture units resolve huge coordinates with too few fraction bits.
+    vec2 i = mod(floor(p), 256.0);
     vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash12(i), hash12(i + vec2(1, 0)), u.x),
-               mix(hash12(i + vec2(0, 1)), hash12(i + vec2(1, 1)), u.x), u.y);
+    return texture(uNoise, (i + u + 0.5) / 256.0).r;
 }
 
 float fbm(vec2 p) {

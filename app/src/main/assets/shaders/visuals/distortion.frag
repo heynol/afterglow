@@ -35,13 +35,14 @@ void main() {
     // The colour split only needs separate passes while it is actually visible.
     float splitAmount = 0.006 * (0.2 + 2.5 * glitch + 0.4 * uBassHit);
     int passes = splitAmount > 0.0025 ? 3 : 1;
+    float norm = amp / tanh(drive);
     vec3 trace = vec3(0.0);
     for (int c = 0; c < 3; c++) {
         if (c >= passes) break;
         float split = passes == 1 ? 0.0 : (float(c) - 1.0) * splitAmount;
         float x = clamp(q.x + split, 0.0, 1.0);
-        float y0 = tanh(wave(x) * drive) / tanh(drive) * amp;
-        float y1 = tanh(wave(x + e) * drive) / tanh(drive) * amp;
+        float y0 = tanh(wave(x) * drive) * norm;
+        float y1 = tanh(wave(x + e) * drive) * norm;
         float slope = (y1 - y0) / (e * aspect);
         float d = abs(q.y - 0.5 - y0) / sqrt(1.0 + slope * slope);
         float width = 0.004 + 0.006 * uBass;
@@ -66,7 +67,9 @@ void main() {
 
     // Background: dark stained film.
     vec2 p = q * vec2(aspect, 1.0);
-    float stains = fbm(p * 2.5 + 7.3);
+    // Two octaves: the stains barely show on the dark film, the finer two of fbm's four were invisible.
+    vec2 sp = p * 2.5 + 7.3;
+    float stains = 0.5 * vnoise(sp) + 0.25 * vnoise(mat2(1.6, 1.2, -1.2, 1.6) * sp) + 0.09;
     float grime = mix(0.3, 1.0, uParam.y);
     col += vec3(0.045, 0.04, 0.035) * (0.6 + 0.7 * stains);
     // Dirt that changes from frame to frame, from the same noise shifted around.
@@ -77,7 +80,11 @@ void main() {
         float fi = float(i);
         float sx = hash12(vec2(frame, fi * 7.0));
         float on = step(1.0 - 0.35 * grime, hash12(vec2(frame * 0.5, fi)));
-        col += vec3(0.5) * on * exp(-abs(uv.x - sx) * uRes.x * 0.6) * (0.5 + 0.5 * vnoise(vec2(uv.y * 40.0, frame)));
+        // A scratch is a few pixels wide: everywhere else its noise would be multiplied by zero.
+        float dx = abs(uv.x - sx) * uRes.x;
+        if (on > 0.0 && dx < 12.0) {
+            col += vec3(0.5) * exp(-dx * 0.6) * (0.5 + 0.5 * vnoise(vec2(uv.y * 40.0, frame)));
+        }
     }
     float dust = step(1.0 - 0.002 * grime, hash12(floor(gl_FragCoord.xy * 0.5) + frame * 13.1));
     col = mix(col, vec3(0.0), dust * 0.8);

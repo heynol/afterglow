@@ -48,11 +48,14 @@ void main() {
     // Sparks orbiting at different radii; the motion field smears them into spiral arms.
     for (int i = 0; i < 5; i++) {
         float fi = float(i);
-        float band = spec(0.04 + fi * 0.18);
         float orbit = 0.14 + 0.09 * fi + 0.05 * sin(t * 0.3 + fi);
         vec2 sp = orbit * vec2(cos(t * (0.5 + 0.12 * fi) + fi * 1.57) * aspect * 0.75, sin(t * (0.5 + 0.12 * fi) + fi * 1.57));
-        float d = length(p - sp);
-        col += pal(fi * 0.2 + uTime * 0.03) * exp(-d * d / 0.0004) * (0.2 + 1.6 * band);
+        vec2 dv = p - sp;
+        float d2 = dot(dv, dv);
+        // A spark is a speck: beyond this its light is below one part in 100 000.
+        if (d2 > 0.0046) continue;
+        float band = spec(0.04 + fi * 0.18);
+        col += pal(fi * 0.2 + uTime * 0.03) * exp(-d2 / 0.0004) * (0.2 + 1.6 * band);
     }
     // Two beams sweeping around the centre, pulsing with the bass: the flow turns them into spiral veils.
     float beam = abs(sin(atan(p.y, p.x) - t * 0.45));
