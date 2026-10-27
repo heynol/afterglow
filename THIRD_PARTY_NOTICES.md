@@ -51,7 +51,7 @@ as credit and need no license text.
 | `common.glsl` `vnoise()`, `fbm()` | Value noise from a lattice texture, fBm with a rotation per octave | Inigo Quilez, "Value noise derivatives" / "fBM", https://iquilezles.org/articles/ |
 | `julia.frag` | Smooth (continuous) iteration count | Inigo Quilez, "Smooth iteration count for generalized Mandelbrot sets", https://iquilezles.org/articles/msetsmooth/ |
 | `lasers.frag` `angleFrom()` | Polynomial arctangent approximation | S. Rajan, S. Wang, R. Inkol, A. Joyal, "Efficient approximations for the arctangent function", IEEE Signal Processing Magazine 23(3), 2006 |
-| `hexwall.frag` | Hexagonal tiling from two offset rectangular grids | Common technique, popularised by Martijn Steinrucken ("The Art of Code", "Hexagonal Tiling Explained", 2019) |
+| `hexwall.frag` | Hexagon grid via axial coordinates and cube rounding | Amit Patel, "Hexagonal Grids", Red Blob Games, https://www.redblobgames.com/grids/hexagons/ |
 | `fractal.frag` | Fold-and-invert ("Kaliset") fractal with orbit traps | Technique by Pablo Román Andrioli ("Kali"), Fractal Forums, 2010 |
 | `cymatics.frag` | Chladni plate mode `cos(nπx)cos(mπy) − cos(mπx)cos(nπy)` | Standard physics formula (E. Chladni, 1787) |
 
