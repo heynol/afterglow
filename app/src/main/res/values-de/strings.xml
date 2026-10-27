@@ -6,6 +6,7 @@
     <string name="capture_notification">Hört die Wiedergabe für den Visualizer mit</string>
 
     <string name="main_subtitle">Musik-Visualisierungen über YouTube. Läuft Musik, erscheint eine Live-Vorschau in der Ecke. Drücke OK, solange sie hervorgehoben ist, für den Vollbildmodus.</string>
+    <string name="main_version">Version %1$s</string>
     <string name="setting_enabled">Visualizer an</string>
 
     <string name="section_setup">Einrichtung</string>

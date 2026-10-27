@@ -7,6 +7,7 @@
     <string name="capture_notification">Listening to playback for the visualizer</string>
 
     <string name="main_subtitle">Music visualizations over YouTube. When music plays, a live preview appears in the corner. Press OK while it is highlighted to go full screen.</string>
+    <string name="main_version">Version %1$s</string>
     <string name="setting_enabled">Visualizer on</string>
 
     <string name="section_setup">Setup</string>

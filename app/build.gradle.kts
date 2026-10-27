@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -14,7 +15,26 @@ android {
         minSdk = 30
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+    }
+
+    // Release key: a properties file (storeFile, storePassword, keyAlias, keyPassword) outside the repo,
+    // from $HEYNOL_SIGNING_PROPERTIES or ~/Keystores/heynol-sideload.properties. Without it the release
+    // build falls back to the debug key, so anyone can build an installable APK from source.
+    val signingProperties = (System.getenv("HEYNOL_SIGNING_PROPERTIES")?.takeIf { it.isNotBlank() }
+        ?.let(::File) ?: File(System.getProperty("user.home"), "Keystores/heynol-sideload.properties"))
+        .takeIf { it.isFile }
+        ?.let { file -> Properties().apply { file.inputStream().use(::load) } }
+
+    signingConfigs {
+        if (signingProperties != null) {
+            create("release") {
+                storeFile = File(signingProperties.getProperty("storeFile"))
+                storePassword = signingProperties.getProperty("storePassword")
+                keyAlias = signingProperties.getProperty("keyAlias")
+                keyPassword = signingProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -22,8 +42,12 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Sideload-only app: sign release with the debug key so `assembleRelease` is installable.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (signingProperties != null) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn("Afterglow: no release signing properties found, signing the release build with the debug key.")
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
