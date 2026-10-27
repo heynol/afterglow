@@ -211,8 +211,9 @@ When YouTube plays music, the preview appears in a corner and takes the remote (
 | Anywhere in a session | Hold Back + ▼ (accessibility shortcut), or the ★ key | Focus the preview / open it / minimise; also undoes X |
 
 The preview highlights itself when it appears and again on each new song. Dismissed with X, it stays away until you
-go Home or to another app and open YouTube again, or until the shortcut calls it back. An optional preview timer
-lets the ring run down and hides the preview until the next song.
+go Home or to another app and open YouTube again, or until the shortcut calls it back. The preview timer (30 s by
+default) lets the ring run down and then hides the preview until the next song; set it to *Off* to keep the preview
+focused until you close it.
 
 ### Visuals
 
@@ -231,8 +232,8 @@ the rotation in the app.
 
 ### Settings
 
-- **Corner preview:** corner (default top right, clear of YouTube's title and controls) · size · preview timer (off by
-  default) · highlight again on a new song · hide passive preview after
+- **Corner preview:** corner (default top right, clear of YouTube's title and controls) · size · preview timer (30 s by
+  default, or off) · highlight again on a new song · hide passive preview after
 - **Full screen:** auto-switch (off / every song / 1, 3, 5 min) with shuffle · song title · opacity (let the video
   shine through)
 - **Music detection & audio:** when to show (when music plays / on any playback) · audio source · picture delay for A/V sync ·
@@ -341,9 +342,10 @@ Lower *Quality* to 720p or 540p, or set *Frame rate* to 30. Heavy visuals (Blob,
 most; remove them from the rotation on slow TVs. `log.tag.VisualRenderer DEBUG` logs the frame rate and resolution
 every 5 s.
 
-**Accessibility turned off after an update or reinstall.**
-Reinstalling from a different signature (debug ↔ release) needs an uninstall, which also disables the service. Run
-setup step 1 again.
+**The accessibility service turned itself off.**
+Android disables an app's accessibility service when the app is force-stopped (*Settings → Apps → Force stop*,
+`adb shell am force-stop`) or uninstalled. Switching between a self-built and an official APK needs an uninstall
+(different signatures). Run setup step 1 again.
 
 ## Uninstall
 
