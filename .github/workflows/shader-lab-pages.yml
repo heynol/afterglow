@@ -1,0 +1,49 @@
+name: Shader Lab on GitHub Pages
+
+# Publishes only tools/shader-lab plus the shader assets it loads. Off until the repository variable
+# SHADER_LAB_PAGES is "true" and Pages is set to deploy from GitHub Actions (see RELEASE_CHECKLIST.md).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/shader-lab/**
+      - app/src/main/assets/**
+      - .github/workflows/shader-lab-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: vars.SHADER_LAB_PAGES == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}tools/shader-lab/
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        # The lab loads '../../app/src/main/assets/', so the site keeps the repo's paths.
+        run: |
+          mkdir -p _site/tools _site/app/src/main/assets
+          cp -R tools/shader-lab _site/tools/
+          cp -R app/src/main/assets/shaders app/src/main/assets/visuals.json _site/app/src/main/assets/
+          cat > _site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>Afterglow Shader Lab</title>
+          <meta http-equiv="refresh" content="0; url=tools/shader-lab/">
+          <a href="tools/shader-lab/">Afterglow Shader Lab</a>
+          HTML
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
