@@ -22,4 +22,4 @@ First public release.
 - Shader Lab: WebGL2 browser tool for developing the shaders against a synthetic track
 - Release builds signed with a dedicated key (falls back to the debug key when building from source)
 
-[1.0.0]: https://github.com/heynol/Android-TV-Visualizer/releases/tag/v1.0.0
+[1.0.0]: https://github.com/heynol/afterglow/releases/tag/v1.0.0

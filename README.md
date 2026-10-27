@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Android TV API 30+](https://img.shields.io/badge/Android%20TV-API%2030%2B-3ddc84.svg)](#compatibility)
-[![Latest release](https://img.shields.io/github/v/release/heynol/Android-TV-Visualizer?label=latest%20release)](https://github.com/heynol/Android-TV-Visualizer/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/heynol/afterglow?label=latest%20release)](https://github.com/heynol/afterglow/releases/latest)
 
 ## What it is
 
@@ -64,7 +64,7 @@ Recorded on the TV (screen captures):
 
 ### Download (recommended)
 
-Get `afterglow-<version>.apk` from [Releases](https://github.com/heynol/Android-TV-Visualizer/releases/latest).
+Get `afterglow-<version>.apk` from [Releases](https://github.com/heynol/afterglow/releases/latest).
 
 The release APK is signed with this certificate. Check the fingerprint before installing:
 
@@ -331,7 +331,7 @@ The shared uniforms and helpers are documented at the top of
 
 The Shader Lab is also set up for GitHub Pages
 ([`.github/workflows/shader-lab-pages.yml`](.github/workflows/shader-lab-pages.yml)) and will be available at
-https://heynol.github.io/Android-TV-Visualizer/ once Pages is enabled.
+https://heynol.github.io/afterglow/ once Pages is enabled.
 
 For scripted captures, the page exposes `window.lab` (`seek`, `setVisual`, `size`, `paused`, `audio`, `capture`).
 

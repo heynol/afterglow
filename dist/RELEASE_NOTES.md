@@ -2,7 +2,7 @@ Afterglow brings Winamp/MilkDrop-style music visualizations to Android TV and Go
 music, a live preview slides into a corner of the screen; press OK for a full-screen light show that reacts to the
 actual audio.
 
-![Afterglow](https://raw.githubusercontent.com/heynol/Android-TV-Visualizer/main/docs/media/hero.webp)
+![Afterglow](https://raw.githubusercontent.com/heynol/afterglow/main/docs/media/hero.webp)
 
 ## Highlights
 
@@ -24,7 +24,7 @@ adb install -r -g afterglow-1.0.0.apk
 ```
 
 Then enable the accessibility service **without replacing other services** and grant the overlay permission, as
-described step by step in the [README](https://github.com/heynol/Android-TV-Visualizer#setup).
+described step by step in the [README](https://github.com/heynol/afterglow#setup).
 
 Coming from a self-built APK? Uninstall it first (different signature).
 
@@ -48,4 +48,4 @@ A0:BD:A1:33:7D:24:4E:53:D8:11:6A:2D:A6:A0:BA:26:AD:2B:90:57:C5:87:6E:07:AD:EB:BD
 - `afterglow-1.0.0.apk.sha256`: checksum
 - `afterglow-demo.mp4`: 40 s of the visuals, rendered in the Shader Lab
 
-Full changelog: [CHANGELOG.md](https://github.com/heynol/Android-TV-Visualizer/blob/main/CHANGELOG.md)
+Full changelog: [CHANGELOG.md](https://github.com/heynol/afterglow/blob/main/CHANGELOG.md)
