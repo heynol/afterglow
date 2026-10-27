@@ -159,6 +159,9 @@ class MainActivity : Activity() {
             text = getString(R.string.main_subtitle)
             setLineSpacing(0f, 1.2f)
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dpi(10f) })
+        texts.addView(text(14f, UiColors.TEXT_SECONDARY).apply {
+            text = getString(R.string.main_version, packageManager.getPackageInfo(packageName, 0).versionName)
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dpi(6f) })
         enabledRow = SwitchRow(this).apply {
             setTitle(getString(R.string.setting_enabled))
             bind(settings.enabled) { settings.enabled = it }

@@ -159,7 +159,8 @@ class OverlayController(
         handler.removeCallbacks(detachWindow)
         attach()
         refreshRotation()
-        if (current?.id != settings.currentVisual) selectVisual(initialVisual(), crossfade = false)
+        // On a fresh install no visual is stored yet: both sides are null, but the renderer still needs one.
+        if (current == null || current?.id != settings.currentVisual) selectVisual(initialVisual(), crossfade = false)
         renderer.setMaxOutputHeight(miniOutputHeight())
         renderer.setRunning(true)
         state = OverlayState(mode = OverlayMode.MINI)

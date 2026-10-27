@@ -7,12 +7,18 @@ void main() {
     float scale = mix(18.0, 7.0, uParam.x);
     vec2 hp = p * scale;
 
-    const vec2 r = vec2(1.0, 1.7320508);
-    vec2 a = mod(hp, r) - r * 0.5;
-    vec2 b = mod(hp - r * 0.5, r) - r * 0.5;
-    vec2 gv = dot(a, a) < dot(b, b) ? a : b;
-    vec2 id = hp - gv;
-    float edge = 0.5 - max(abs(gv.x), dot(abs(gv), normalize(r)));
+    // Pointy-top hexagons, neighbours one unit apart: to axial coordinates, round to the nearest cell
+    // in cube space (the component that moved most is rebuilt from the other two), back to the centre.
+    float ar = hp.y * 1.1547005;
+    vec3 cube = vec3(hp.x - 0.5 * ar, ar, -hp.x - 0.5 * ar);
+    vec3 axial = floor(cube + 0.5);
+    vec3 moved = abs(axial - cube);
+    if (moved.x > moved.y && moved.x > moved.z) axial.x = -axial.y - axial.z;
+    else if (moved.y > moved.z) axial.y = -axial.x - axial.z;
+    vec2 id = vec2(axial.x + 0.5 * axial.y, axial.y * 0.8660254);
+    vec2 gv = hp - id;
+    // Distance to the hexagon's edges: the vertical pair and the two slanted pairs.
+    float edge = 0.5 - max(abs(gv.x), dot(abs(gv), vec2(0.5, 0.8660254)));
 
     vec2 cp = id / scale;
     float dist = length(cp);
