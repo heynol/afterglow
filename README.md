@@ -37,7 +37,12 @@ commands, and it only works with apps whose audio Android lets it hear.
 | **3D worlds** | **Generative art** |
 | ![Outrun](docs/media/visual-3d.png) | ![Aurora](docs/media/visual-generative.png) |
 
-Recorded on the TV (screen capture of the overlay in full screen and the carousel):
+Recorded on the TV (screen captures):
+
+![Corner preview over a music video on YouTube, then OK for full screen](docs/media/tv-corner.webp)
+
+*The corner preview appears over YouTube; OK opens full screen. Music: Cartoon, Jéja – On & On (feat. Daniel Levi)
+[NCS Release], provided by [NoCopyrightSounds](https://youtu.be/K4DyBUG242c).*
 
 | Full screen, ◀/▶ to switch | Carousel (▼) |
 |---|---|

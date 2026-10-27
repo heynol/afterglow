@@ -4,8 +4,8 @@ Screen recordings can't show what makes Afterglow fun: the light in a dark room,
 in hand. These shots need a phone camera. They're for the release page, the portfolio and social posts.
 
 **Music rights:** use a track you're allowed to publish (your own, CC-licensed, or e.g. from the YouTube Audio
-Library). The screen capture `dist/tv/tv-corner.mp4` shows a commercial music video under the preview and is for
-reference only; don't publish it.
+Library). The screen captures in `docs/media` and `dist/tv` use an NCS track (credit in the README) or show only
+Afterglow's own picture.
 
 **Setup:** room dark or dimmed, phone on a tripod or braced, 4K/30 or 1080p/60, exposure locked on the TV (tap and
 hold), auto-HDR off. A shutter of 1/60 s or slower avoids TV flicker bands.
