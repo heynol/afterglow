@@ -37,6 +37,12 @@ commands, and it only works with apps whose audio Android lets it hear.
 | **3D worlds** | **Generative art** |
 | ![Outrun](docs/media/visual-3d.png) | ![Aurora](docs/media/visual-generative.png) |
 
+Recorded on the TV (screen capture of the overlay in full screen and the carousel):
+
+| Full screen, ◀/▶ to switch | Carousel (▼) |
+|---|---|
+| ![Full screen on the TV](docs/media/tv-fullscreen.webp) | ![Carousel on the TV](docs/media/tv-carousel.webp) |
+
 ## Compatibility
 
 - **Android TV / Google TV with Android 11 (API 30) or newer** and OpenGL ES 3.0. Remote focus hand-back on ▲/▼
@@ -117,6 +123,10 @@ an official release or the other way round: uninstall first when switching.
 ## Setup
 
 Each step below is one `adb` command. The app's own setup section shows the state of each step live.
+
+| Setup status on the TV | Settings |
+|---|---|
+| ![Setup screen](docs/media/tv-setup.png) | ![Settings screen](docs/media/tv-settings.png) |
 
 ### 1. Accessibility service (required)
 
