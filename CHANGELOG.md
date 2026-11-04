@@ -3,6 +3,17 @@
 All notable changes to Afterglow. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Shader Lab: real audio from the microphone, a browser tab or an audio file, analysed by a port of the app's
+  `AudioAnalyzer`; files can also be rendered frame by frame through `lab.loadAudio`
+
+### Changed
+
+- Shader Lab: the spectrum history is filled like the app's (loudest of each four bins, not one sampled bin)
+
 ## [1.0.0] - 2026-10-27
 
 First public release.

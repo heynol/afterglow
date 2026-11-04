@@ -16,7 +16,8 @@
   canvas { display: block; width: 100%; max-width: 1280px; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; }
   #params { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 10px 0; color: var(--muted); }
   #log { white-space: pre-wrap; color: #ff8a80; font: 12px/1.35 ui-monospace, monospace; }
-  #stats { color: var(--muted); font-variant-numeric: tabular-nums; }
+  #stats, #audio-info { color: var(--muted); font-variant-numeric: tabular-nums; }
+  body.drop canvas { outline: 2px dashed var(--accent); outline-offset: 4px; }
 </style>
 </head>
 <body>
@@ -27,9 +28,18 @@
   <label>Speed <input id="speed" type="range" min="0.5" max="2" step="0.05" value="1"></label>
   <label>React <input id="react" type="range" min="0.5" max="2" step="0.05" value="1"></label>
   <label>Scale <select id="scale"><option>1</option><option>0.9</option><option>0.8</option><option>0.75</option><option>0.7</option><option>0.6</option><option selected>0.5</option><option>0.42</option><option>0.35</option></select></label>
+  <label>Audio <select id="source">
+    <option value="sim">Simulated</option>
+    <option value="mic">Microphone</option>
+    <option value="tab">Tab or system audio</option>
+    <option value="file" disabled>Audio file</option>
+  </select></label>
+  <button id="open">Open file…</button>
+  <input id="file" type="file" accept="audio/*" hidden>
   <button id="grid">Grid</button>
   <button id="pause">Pause</button>
   <span id="stats"></span>
+  <span id="audio-info"></span>
 </header>
 <main>
   <canvas id="c" width="1280" height="720"></canvas>
@@ -38,7 +48,8 @@
 </main>
 <script>
 // Mirrors dev.heynol.afterglow.render: same shader prelude, uniforms, stroke pass and feedback
-// ping-pong. Audio is faked (124 BPM kick/snare/hats, bassline, chords) for visual tuning.
+// ping-pong. Audio is simulated (124 BPM kick/snare/hats, bassline, chords) for visual tuning, or
+// real: microphone, tab or system audio, or an audio file, analysed like the app's AudioAnalyzer.
 const ASSETS = '../../app/src/main/assets/';
 const HIST_BINS = 128, HIST_ROWS = 96, HIST_RATE = 30;
 const $ = (id) => document.getElementById(id);
@@ -181,7 +192,10 @@ function fakeAudio(t, dt) {
   const beatIndex = drums ? Math.floor(beats) : lastBeat;
   if (beatIndex !== lastBeat) { lastBeat = beatIndex; A.beat = 1; A.beatCount++; }
   A.beat *= Math.exp(-dt / 0.18);
+}
 
+// As AudioTextures.update: expects rows 0-3 of [audio] filled, adds the peaks and uploads.
+function uploadAudio(dt) {
   // Peak hold, as AudioTextures.updatePeaks
   for (let i = 0; i < 512; i++) {
     const v = audio[i] * 0.65 + audio[512 + i] * 0.35;
@@ -194,14 +208,486 @@ function fakeAudio(t, dt) {
   gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 512, 5, gl.RED, gl.FLOAT, audio);
 
   histAcc += dt * HIST_RATE;
+  if (histAcc > 4) histAcc = 1; // after a stall, push once instead of smearing
   while (histAcc >= 1) {
     histAcc -= 1;
     histHead = (histHead + 1) % HIST_ROWS;
     const row = new Float32Array(HIST_BINS);
-    for (let i = 0; i < HIST_BINS; i++) row[i] = audio[512 + Math.floor(i * 511 / (HIST_BINS - 1))];
+    const span = 512 / HIST_BINS;
+    for (let i = 0; i < HIST_BINS; i++) {
+      let m = 0;
+      for (let k = 0; k < span; k++) m = Math.max(m, audio[512 + i * span + k]);
+      row[i] = m;
+    }
     gl.bindTexture(gl.TEXTURE_2D, histTex);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, histHead, HIST_BINS, 1, gl.RED, gl.FLOAT, row);
   }
+}
+
+// ---- Real audio ---------------------------------------------------------------------------
+// Port of dev.heynol.afterglow.audio.AudioAnalyzer (stream mode, without the music classifier), so
+// visuals react to real music as they do on the TV. Time comes from the sample position, not the
+// wall clock, which keeps file renders deterministic.
+const BINS = 512, WAVE = 512, MIN_HZ = 30, MAX_HZ = 16000;
+const RING = 8192, RING_MASK = RING - 1, WAVE_SPAN = WAVE * 3, ONSET_HISTORY = 80;
+const SILENCE_RMS = 5.6e-4, FLOOR_AMP = 1e-3, RANGE_DB = 50, REF_RELEASE_DB_PER_S = 3, REF_FLOOR_DB = -65;
+const MIN_BEAT_GAP = 0.28;
+const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+
+class Fft {
+  constructor(size) {
+    this.size = size;
+    this.cos = Float32Array.from({ length: size / 2 }, (_, i) => Math.cos(2 * Math.PI * i / size));
+    this.sin = Float32Array.from({ length: size / 2 }, (_, i) => Math.sin(2 * Math.PI * i / size));
+    const bits = Math.log2(size);
+    this.reversed = Int32Array.from({ length: size }, (_, i) => {
+      let r = 0;
+      for (let b = 0; b < bits; b++) if (i & (1 << b)) r |= 1 << (bits - 1 - b);
+      return r;
+    });
+  }
+
+  transform(re, im) {
+    const { size, cos, sin, reversed } = this;
+    for (let i = 0; i < size; i++) {
+      const j = reversed[i];
+      if (j > i) {
+        let x = re[i]; re[i] = re[j]; re[j] = x;
+        x = im[i]; im[i] = im[j]; im[j] = x;
+      }
+    }
+    for (let half = 1; half < size; half *= 2) {
+      const step = size / (half * 2);
+      for (let start = 0; start < size; start += half * 2) {
+        for (let i = start, k = 0; i < start + half; i++, k += step) {
+          const c = cos[k], s = -sin[k], j = i + half;
+          const tr = re[j] * c - im[j] * s, ti = re[j] * s + im[j] * c;
+          re[j] = re[i] - tr; im[j] = im[i] - ti;
+          re[i] += tr; im[i] += ti;
+        }
+      }
+    }
+  }
+}
+
+class Analyzer {
+  constructor() {
+    this.spectrum = new Float32Array(BINS);
+    this.spectrumFast = new Float32Array(BINS);
+    this.waveL = new Float32Array(WAVE);
+    this.waveR = new Float32Array(WAVE);
+    this.bass = this.mid = this.treble = this.level = this.bassHit = this.energy = 0;
+    this.beatCount = 0;
+    this.lastBeat = -1e9;
+    this.time = 0;
+    this.rate = this.size = 0;
+    this.binPos = new Float32Array(BINS);
+    this.binLo = new Int32Array(BINS);
+    this.binHi = new Int32Array(BINS);
+    this.binTilt = new Float32Array(BINS);
+    this.ringL = new Float32Array(RING);
+    this.ringR = new Float32Array(RING);
+    this.writePos = this.sinceHop = this.filled = 0;
+    this.lastTime = -1;
+    this.refDb = -40;
+    this.bassPeak = this.midPeak = this.treblePeak = this.levelPeak = this.longPeak = FLOOR_AMP;
+    this.bassFast = this.bassSlow = this.longRms = 0;
+    this.wavePeak = 0.05;
+    this.raw = new Float32Array(BINS);
+    this.onsetHistory = new Float32Array(ONSET_HISTORY);
+    this.onsetPos = this.onsetCount = this.onsetPrev1 = this.onsetPrev2 = 0;
+    this.lowFluxMean = this.fullFluxMean = 1e-3;
+  }
+
+  configure(rate, size) {
+    if (rate === this.rate && size === this.size) return;
+    this.rate = rate;
+    this.size = size;
+    this.hop = size / 4;
+    this.fft = new Fft(size);
+    this.window = Float32Array.from({ length: size }, (_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (size - 1)));
+    this.windowGain = 2 / this.window.reduce((a, b) => a + b);
+    this.re = new Float32Array(size);
+    this.im = new Float32Array(size);
+    this.mag = new Float32Array(size / 2);
+    this.logMag = new Float32Array(size / 2);
+    this.prevLogMag = new Float32Array(size / 2);
+    const binHz = rate / size, ratio = MAX_HZ / MIN_HZ;
+    for (let j = 0; j < BINS; j++) {
+      const f = MIN_HZ * Math.pow(ratio, j / (BINS - 1));
+      const fNext = MIN_HZ * Math.pow(ratio, (j + 1) / (BINS - 1));
+      const pos = f / binHz, width = (fNext - f) / binHz;
+      this.binPos[j] = pos;
+      if (width <= 1) {
+        this.binLo[j] = -1; // interpolate
+      } else {
+        this.binLo[j] = clamp(Math.floor(pos - width / 2), 1, size / 2 - 1);
+        this.binHi[j] = clamp(Math.round(pos + width / 2), this.binLo[j], size / 2 - 1);
+      }
+      // Pink-noise compensation: +3 dB per octave above 1 kHz, so highs don't vanish.
+      this.binTilt[j] = clamp(3 * Math.log2(f / 1000), -6, 12);
+    }
+    const bin = (hz) => clamp(Math.round(hz / binHz), 1, size / 2);
+    this.bassEnd = bin(150);
+    this.midEnd = bin(2000);
+    this.trebleEnd = bin(16000);
+    this.fluxEnd = bin(8000);
+    this.lowFluxEnd = bin(250);
+    this.filled = 0;
+    this.lastTime = -1;
+  }
+
+  /** Continuous PCM, one array per channel. [time] is the stream time of the last sample, in seconds. */
+  push(l, r, frames, rate, time) {
+    this.configure(rate, rate >= 32000 ? 2048 : 1024);
+    for (let i = 0; i < frames; i++) {
+      this.ringL[this.writePos] = l[i];
+      this.ringR[this.writePos] = r[i];
+      this.writePos = (this.writePos + 1) & RING_MASK;
+      if (this.filled < RING) this.filled++;
+      if (++this.sinceHop >= this.hop) {
+        this.sinceHop = 0;
+        if (this.filled >= this.size + WAVE_SPAN) this.analyze(time - (frames - 1 - i) / rate);
+      }
+    }
+  }
+
+  analyze(now) {
+    const { size, re, im, mag, logMag, prevLogMag, raw, ringL, ringR } = this;
+    const dt = this.lastTime < 0 ? this.hop / this.rate : clamp(now - this.lastTime, 0.001, 0.2);
+    this.lastTime = now;
+
+    // Window the newest samples (older WAVE_SPAN samples are kept for the scope trigger).
+    const start = (this.writePos - size + RING) & RING_MASK;
+    let sumSq = 0;
+    for (let i = 0; i < size; i++) {
+      const idx = (start + i) & RING_MASK;
+      const m = (ringL[idx] + ringR[idx]) * 0.5;
+      sumSq += m * m;
+      re[i] = m * this.window[i];
+      im[i] = 0;
+    }
+    const rms = Math.sqrt(sumSq / size);
+    this.fft.transform(re, im);
+
+    let bassPow = 0, midPow = 0, treblePow = 0, lowFlux = 0, fullFlux = 0;
+    const half = size / 2;
+    for (let k = 1; k < half; k++) {
+      const a = Math.sqrt(re[k] * re[k] + im[k] * im[k]) * this.windowGain;
+      mag[k] = a;
+      const p = a * a;
+      if (k < this.bassEnd) bassPow += p;
+      else if (k < this.midEnd) midPow += p;
+      else if (k < this.trebleEnd) treblePow += p;
+      const lm = Math.log(1 + 1000 * a);
+      logMag[k] = lm;
+      const d = lm - prevLogMag[k];
+      if (d > 0 && k < this.fluxEnd) {
+        fullFlux += d;
+        if (k < this.lowFluxEnd) lowFlux += d;
+      }
+    }
+    prevLogMag.set(logMag);
+
+    const silent = rms < SILENCE_RMS;
+
+    // Spectrum
+    let frameMax = -120;
+    for (let j = 0; j < BINS; j++) {
+      let a = 0;
+      if (this.binLo[j] < 0) {
+        const pos = clamp(this.binPos[j], 1, half - 2);
+        const i0 = Math.floor(pos), t = pos - i0;
+        a = mag[i0] * (1 - t) + mag[i0 + 1] * t;
+      } else {
+        for (let k = this.binLo[j]; k <= this.binHi[j]; k++) a = Math.max(a, mag[k]);
+      }
+      const db = 20 * Math.log10(a + 1e-9) + this.binTilt[j];
+      raw[j] = db;
+      frameMax = Math.max(frameMax, db);
+    }
+    this.refDb = frameMax > this.refDb ? frameMax : Math.max(this.refDb - REF_RELEASE_DB_PER_S * dt, REF_FLOOR_DB);
+    const floorDb = this.refDb - RANGE_DB;
+    const fastDecay = Math.exp(-dt / 0.10);
+    const smoothUp = 1 - Math.exp(-dt / 0.035), smoothDown = 1 - Math.exp(-dt / 0.30);
+    for (let j = 0; j < BINS; j++) {
+      const v = silent ? 0 : clamp((raw[j] - floorDb) / RANGE_DB, 0, 1);
+      this.spectrumFast[j] = Math.max(v, this.spectrumFast[j] * fastDecay);
+      const s = this.spectrum[j];
+      this.spectrum[j] = s + (v - s) * (v > s ? smoothUp : smoothDown);
+    }
+
+    // Bands (AGC per band, peak memory of a few seconds)
+    const peakDecay = Math.exp(-dt / 6);
+    const bassAmp = Math.sqrt(bassPow), midAmp = Math.sqrt(midPow), trebleAmp = Math.sqrt(treblePow);
+    this.bassPeak = Math.max(bassAmp, this.bassPeak * peakDecay, FLOOR_AMP);
+    this.midPeak = Math.max(midAmp, this.midPeak * peakDecay, FLOOR_AMP);
+    this.treblePeak = Math.max(trebleAmp, this.treblePeak * peakDecay, FLOOR_AMP);
+    this.levelPeak = Math.max(rms, this.levelPeak * peakDecay, FLOOR_AMP);
+    const follow = (current, target) => {
+      const tau = target > current ? 0.015 : 0.18;
+      return current + (clamp(target, 0, 1.2) - current) * (1 - Math.exp(-dt / tau));
+    };
+    this.bass = follow(this.bass, Math.pow(bassAmp / this.bassPeak, 0.8));
+    this.mid = follow(this.mid, Math.pow(midAmp / this.midPeak, 0.8));
+    this.treble = follow(this.treble, Math.pow(trebleAmp / this.treblePeak, 0.8));
+    this.level = follow(this.level, Math.pow(rms / this.levelPeak, 0.8));
+
+    this.bassFast += (bassAmp - this.bassFast) * (1 - Math.exp(-dt / (bassAmp > this.bassFast ? 0.008 : 0.06)));
+    this.bassSlow += (bassAmp - this.bassSlow) * (1 - Math.exp(-dt / 0.3));
+    this.bassHit = clamp((this.bassFast - this.bassSlow * 1.1) / this.bassPeak * 3, 0, 1);
+
+    this.longRms += (rms - this.longRms) * (1 - Math.exp(-dt / 2.5));
+    this.longPeak = Math.max(this.longRms, this.longPeak * Math.exp(-dt / 45), FLOOR_AMP);
+    this.energy = clamp(this.longRms / this.longPeak, 0, 1);
+
+    // Onsets: low-frequency flux (kicks) weighted over full-band flux, adaptive threshold.
+    this.lowFluxMean += (lowFlux - this.lowFluxMean) * (1 - Math.exp(-dt / 2));
+    this.fullFluxMean += (fullFlux - this.fullFluxMean) * (1 - Math.exp(-dt / 2));
+    const onset = silent ? 0 : 0.65 * lowFlux / Math.max(this.lowFluxMean, 1e-3) + 0.35 * fullFlux / Math.max(this.fullFluxMean, 1e-3);
+    this.detectBeat(onset, now);
+
+    this.writeWaveform(dt);
+    this.time = now;
+  }
+
+  detectBeat(onset, now) {
+    this.onsetHistory[this.onsetPos] = onset;
+    this.onsetPos = (this.onsetPos + 1) % ONSET_HISTORY;
+    this.onsetCount = Math.min(this.onsetCount + 1, ONSET_HISTORY);
+    let mean = 0, sq = 0;
+    for (let i = 0; i < this.onsetCount; i++) {
+      mean += this.onsetHistory[i];
+      sq += this.onsetHistory[i] * this.onsetHistory[i];
+    }
+    mean /= this.onsetCount;
+    const std = Math.sqrt(Math.max(sq / this.onsetCount - mean * mean, 0));
+    const threshold = mean + 1.3 * std + 0.3;
+    // Peak picking one hop late: the previous value must be a local maximum above threshold.
+    const candidate = this.onsetPrev1;
+    if (this.onsetCount > 8 && candidate > threshold && candidate > this.onsetPrev2 && candidate >= onset && now - this.lastBeat > MIN_BEAT_GAP) {
+      this.beatCount++;
+      this.lastBeat = now;
+    }
+    this.onsetPrev2 = this.onsetPrev1;
+    this.onsetPrev1 = onset;
+  }
+
+  writeWaveform(dt) {
+    const { ringL, ringR, waveL, waveR } = this;
+    const decim = this.rate >= 32000 && this.filled >= this.size + WAVE_SPAN ? 2 : 1;
+    const span = WAVE * decim;
+    const search = Math.min(WAVE, Math.max(this.filled - span, 0));
+    const base = (this.writePos - span - search + RING) & RING_MASK;
+    // Rising zero crossing of a lightly smoothed mono signal keeps periodic waves standing still.
+    let trigger = search, prev = 0;
+    for (let i = 0; i < search; i++) {
+      const idx = (base + i) & RING_MASK;
+      const s = prev * 0.6 + (ringL[idx] + ringR[idx]) * 0.5 * 0.4;
+      if (i > 0 && prev < 0 && s >= 0) {
+        trigger = i;
+        break;
+      }
+      prev = s;
+    }
+    let peak = 0;
+    const begin = (base + trigger) & RING_MASK;
+    for (let i = 0; i < WAVE; i++) {
+      let l = 0, r = 0;
+      for (let d = 0; d < decim; d++) {
+        const idx = (begin + i * decim + d) & RING_MASK;
+        l += ringL[idx];
+        r += ringR[idx];
+      }
+      l /= decim;
+      r /= decim;
+      waveL[i] = l;
+      waveR[i] = r;
+      peak = Math.max(peak, Math.abs(l), Math.abs(r));
+    }
+    this.wavePeak = Math.max(peak, this.wavePeak * Math.exp(-dt / 1.5), 0.02);
+    const g = 0.95 / this.wavePeak;
+    for (let i = 0; i < WAVE; i++) {
+      waveL[i] = clamp(waveL[i] * g, -1, 1);
+      waveR[i] = clamp(waveR[i] * g, -1, 1);
+    }
+  }
+}
+
+// Copies PCM off the audio thread in blocks of 512 frames.
+const TAP = `registerProcessor('afterglow-tap', class extends AudioWorkletProcessor {
+  l = new Float32Array(512); r = new Float32Array(512); n = 0;
+  process([input]) {
+    const l = input[0], r = input[1] || l;
+    if (!l) return true;
+    for (let i = 0; i < l.length; i++) {
+      this.l[this.n] = l[i];
+      this.r[this.n] = r[i];
+      if (++this.n === 512) {
+        this.port.postMessage([this.l.slice(), this.r.slice(), currentTime + (i + 1) / sampleRate]);
+        this.n = 0;
+      }
+    }
+    return true;
+  }
+});`;
+
+let source = 'sim', analyzer = new Analyzer(), audioCtx = null, tapLoaded = false;
+let stream = null, inputNode = null, tapNode = null, liveArrival = 0;
+let fileBuffer = null, fileName = '', fileFed = 0, player = null, playerStart = 0;
+
+const audioInfo = (msg) => { $('audio-info').textContent = msg; };
+
+function context() {
+  audioCtx ??= new AudioContext();
+  audioCtx.resume(); // not awaited: pending until the page has seen a user gesture
+  return audioCtx;
+}
+
+function stopInput() {
+  stopPlayer();
+  if (stream) stream.getTracks().forEach((track) => { track.onended = null; track.stop(); });
+  if (inputNode) inputNode.disconnect();
+  if (tapNode) { tapNode.port.onmessage = null; tapNode.disconnect(); }
+  stream = inputNode = tapNode = null;
+}
+
+/** Switches to a live MediaStream: tapped for analysis only, never played back. */
+async function useStream(kind, media, label) {
+  const ctx = context();
+  if (!tapLoaded) {
+    await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([TAP], { type: 'text/javascript' })));
+    tapLoaded = true;
+  }
+  stream = media;
+  inputNode = ctx.createMediaStreamSource(media);
+  tapNode = new AudioWorkletNode(ctx, 'afterglow-tap');
+  analyzer = new Analyzer();
+  tapNode.port.onmessage = ({ data: [l, r, time] }) => {
+    analyzer.push(l, r, 512, ctx.sampleRate, time);
+    liveArrival = performance.now();
+  };
+  inputNode.connect(tapNode);
+  tapNode.connect(ctx.destination); // silent, but keeps the node running
+  // Ending the share from the browser's own bar, or unplugging the device, returns to the simulation.
+  media.getAudioTracks()[0].onended = () => setSource('sim');
+  source = kind;
+  $('source').value = kind;
+  audioInfo(`${label} · ${Math.round(ctx.sampleRate / 100) / 10} kHz`);
+}
+
+const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+
+async function setSource(kind) {
+  stopInput();
+  source = 'sim';
+  $('source').value = 'sim';
+  audioInfo(kind === 'mic' || kind === 'tab' ? 'Waiting for access…' : '');
+  try {
+    if (kind === 'mic') {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('needs https or localhost');
+      const media = await navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO });
+      await useStream('mic', media, media.getAudioTracks()[0].label || 'Microphone');
+    } else if (kind === 'tab') {
+      if (!navigator.mediaDevices?.getDisplayMedia) throw new Error('not supported by this browser');
+      // Browsers only offer audio together with a video share; the video is not used.
+      const media = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: RAW_AUDIO, systemAudio: 'include' });
+      if (!media.getAudioTracks().length) {
+        media.getTracks().forEach((track) => track.stop());
+        throw new Error('nothing shared with audio. Pick a Chrome tab and turn on its audio');
+      }
+      await useStream('tab', media, 'Tab or system audio');
+    } else if (kind === 'file') {
+      startFile();
+    }
+  } catch (e) {
+    audioInfo(`Audio: ${e.message}`);
+  }
+}
+
+/** Decodes a File, Blob or ArrayBuffer and plays it from the start. */
+async function loadFile(data, name) {
+  audioInfo(`Decoding ${name}…`);
+  const decoded = await context().decodeAudioData(data instanceof ArrayBuffer ? data : await data.arrayBuffer());
+  stopInput(); // only now: a file that can't be decoded leaves the current source running
+  fileBuffer = decoded;
+  fileName = name;
+  $('source').querySelector('[value=file]').disabled = false;
+  startFile();
+}
+
+function openFile(file) {
+  loadFile(file, file.name).catch(() => audioInfo(`Audio: could not decode ${file.name}`));
+}
+
+function startFile() {
+  if (!fileBuffer) return;
+  context();
+  source = 'file';
+  $('source').value = 'file';
+  analyzer = new Analyzer();
+  t = 0;
+  fileFed = 0;
+  startPlayer();
+  // Without a user gesture yet (scripted use) the context waits; it starts playing after the first one.
+  if (audioCtx.state !== 'running') audioCtx.resume().then(() => { if (!player) startPlayer(); });
+  const s = Math.round(fileBuffer.duration);
+  audioInfo(`${fileName} · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
+}
+
+// A file plays in lab time, t being the position in the file: t drives the analysis, so stepping
+// renderFrame by hand stays deterministic and silent. While playing, t follows the audio clock so
+// picture and sound can't drift apart.
+function startPlayer() {
+  stopPlayer();
+  if (source !== 'file' || paused || audioCtx.state !== 'running') return;
+  player = audioCtx.createBufferSource();
+  player.buffer = fileBuffer;
+  player.loop = true;
+  player.connect(audioCtx.destination);
+  player.start(0, t % fileBuffer.duration);
+  playerStart = audioCtx.currentTime - t;
+}
+
+function stopPlayer() {
+  if (player) { player.onended = null; player.stop(); player.disconnect(); }
+  player = null;
+}
+
+function feedFile() {
+  const rate = fileBuffer.sampleRate, total = fileBuffer.length;
+  const end = Math.round(t * rate);
+  if (end < fileFed || end - fileFed > rate) {
+    // After a jump: start over, so a frame only depends on the file position and the frames before it.
+    analyzer = new Analyzer();
+    fileFed = Math.max(end - Math.round(rate * 0.2), 0); // enough to fill the analysis window
+  }
+  const frames = end - fileFed;
+  if (frames <= 0) return;
+  const left = fileBuffer.getChannelData(0);
+  const right = fileBuffer.getChannelData(fileBuffer.numberOfChannels > 1 ? 1 : 0);
+  const l = new Float32Array(frames), r = new Float32Array(frames);
+  for (let i = 0; i < frames; i++) {
+    const k = (fileFed + i) % total;
+    l[i] = left[k];
+    r[i] = right[k];
+  }
+  analyzer.push(l, r, frames, rate, end / rate);
+  fileFed = end;
+}
+
+function realAudio() {
+  if (source === 'file') feedFile();
+  const f = analyzer;
+  audio.set(f.spectrum, 0);
+  audio.set(f.spectrumFast, 512);
+  audio.set(f.waveL, 1024);
+  audio.set(f.waveR, 1536);
+  A.bass = f.bass; A.mid = f.mid; A.treble = f.treble; A.level = f.level;
+  A.bassHit = f.bassHit; A.energy = f.energy; A.beatCount = f.beatCount;
+  // Live input arrives in blocks: count on from the newest block so the beat pulse decays smoothly.
+  const now = source === 'file' ? f.time : f.time + (performance.now() - liveArrival) / 1000;
+  A.beat = Math.exp(-Math.max(now - f.lastBeat, 0) / 0.18);
 }
 
 // ---- Rendering ----------------------------------------------------------------------------
@@ -415,8 +901,14 @@ function present(v, tex, x, y, w, h, t) {
 
 let gridMode = false, paused = false, last = performance.now(), t = 0, frame = 0, fpsAcc = 0, fpsN = 0;
 function tick(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  let dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  if (player) {
+    // Follow the audio clock, minus the time the sound still takes to reach the speakers.
+    const at = audioCtx.currentTime - playerStart - (audioCtx.outputLatency || 0);
+    if (Math.abs(at - t) > 0.25) t = at; // after a hidden tab: catch up instead of a huge step
+    dt = Math.max(0, at - t);
+  }
   if (!paused) renderFrame(dt);
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { $('stats').textContent = `${Math.round(fpsN / fpsAcc)} fps · float targets: ${floatTargets}`; fpsAcc = 0; fpsN = 0; }
@@ -427,7 +919,9 @@ function renderFrame(dt) {
   {
     t += dt;
     frame++;
-    fakeAudio(t, dt);
+    if (source === 'sim') fakeAudio(t, dt);
+    else realAudio();
+    uploadAudio(dt);
     const scale = +$('scale').value;
     if (gridMode) {
       const cols = Math.ceil(Math.sqrt(catalog.visuals.length));
@@ -452,22 +946,53 @@ function renderFrame(dt) {
 
 $('visual').onchange = () => { location.hash = $('visual').value; buildParams(); };
 $('grid').onclick = () => { gridMode = !gridMode; $('grid').classList.toggle('on', gridMode); };
-$('pause').onclick = () => { paused = !paused; $('pause').classList.toggle('on', paused); };
+$('pause').onclick = () => { setPaused(!paused); };
+$('source').onchange = () => { setSource($('source').value); };
+$('open').onclick = () => { $('file').click(); };
+$('file').onchange = () => {
+  if ($('file').files[0]) openFile($('file').files[0]);
+  $('file').value = '';
+};
+addEventListener('dragover', (e) => { e.preventDefault(); document.body.classList.add('drop'); });
+addEventListener('dragleave', (e) => { if (!e.relatedTarget) document.body.classList.remove('drop'); });
+addEventListener('drop', (e) => {
+  e.preventDefault();
+  document.body.classList.remove('drop');
+  if (e.dataTransfer.files[0]) openFile(e.dataTransfer.files[0]);
+});
+
+function setPaused(p) {
+  paused = p;
+  $('pause').classList.toggle('on', paused);
+  if (source === 'file') startPlayer();
+}
+
 window.lab = {
-  seek(seconds) { t = seconds; },
+  seek(seconds) { t = seconds; if (player) startPlayer(); },
   setVisual(id) { $('visual').value = id; buildParams(); },
   get paused() { return paused; },
-  set paused(p) { paused = p; },
+  set paused(p) { setPaused(p); },
   /** Output size, e.g. lab.size(1920, 1080) to judge sharpness at TV resolution. */
   size(w, h) { canvas.width = w; canvas.height = h; },
-  /** The simulated audio features, e.g. lab.audio.beatCount = 160 to jump ten phrases ahead. */
+  /** The current audio features, e.g. lab.audio.beatCount = 160 to jump ten phrases ahead (simulated audio only). */
   audio: A,
+  /** The audio source: 'sim', 'mic', 'tab' or 'file' (the file loaded last). */
+  source: setSource,
+  /**
+   * Loads an audio file by URL and plays it. With lab.paused = true nothing is heard and renderFrame steps
+   * through the file deterministically, e.g. for lab.capture or a video render with real music.
+   */
+  async loadAudio(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(url + ': ' + r.status);
+    await loadFile(await r.arrayBuffer(), url.split('/').pop());
+  },
   /**
    * Renders [frames] frames at 60 fps synchronously (works while the tab is hidden), then posts the
    * canvas as PNG to a local capture server, e.g. lab.capture('pulsar', { at: 12, scale: 0.5 }).
    */
   capture(name, { at = null, scale = null, frames = 90, url = 'http://127.0.0.1:8766/' } = {}) {
-    paused = true;
+    setPaused(true);
     if (scale != null) $('scale').value = String(scale);
     if (at != null) t = Math.max(0, at - frames / 60);
     for (let i = 0; i < frames; i++) renderFrame(1 / 60);

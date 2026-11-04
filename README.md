@@ -27,7 +27,7 @@ commands, and it only works with apps whose audio Android lets it hear.
 - **Built for slow TV GPUs**: adaptive render resolution per visual, steady 60 or 30 fps, picture delay for A/V sync
 - **Reduce flashing** on by default
 - **No network access.** The app has no `INTERNET` permission.
-- **Shader Lab**: develop and tune the shaders in a desktop browser against a synthetic track
+- **Shader Lab**: develop and tune the shaders in a desktop browser against a synthetic track or real audio
 
 ![All 24 visuals](docs/media/grid.png)
 
@@ -318,8 +318,8 @@ flowchart LR
 ## Shader Lab
 
 [`tools/shader-lab`](tools/shader-lab/index.html) renders the same shaders with WebGL2 (GLSL ES 3.00, same prelude,
-stroke pass, feedback and composite) against a synthetic 124 BPM track. It has a grid view, palette and knob
-controls, and shows compile errors with line context. From the repo root:
+stroke pass, feedback and composite) against a synthetic 124 BPM track or real audio. It has a grid view, palette
+and knob controls, and shows compile errors with line context. From the repo root:
 
 ```bash
 python3 -m http.server 8765
@@ -333,7 +333,28 @@ The Shader Lab is also set up for GitHub Pages
 ([`.github/workflows/shader-lab-pages.yml`](.github/workflows/shader-lab-pages.yml)) and will be available at
 https://heynol.github.io/afterglow/ once Pages is enabled.
 
-For scripted captures, the page exposes `window.lab` (`seek`, `setVisual`, `size`, `paused`, `audio`, `capture`).
+The **Audio** menu picks what drives the visuals. Real audio goes through a JavaScript port of the app's
+`AudioAnalyzer` (without the music classifier), so a track moves the visuals as it does on the TV.
+
+| Source | How it works |
+|---|---|
+| Simulated | The synthetic track. The default; needs no permission. |
+| Microphone | The system's default input, with echo cancellation, noise suppression and gain control off. |
+| Tab or system audio | Screen sharing with audio. In Chrome, pick a tab and turn on its audio. Whether a whole screen offers system audio depends on the browser and OS, and Safari and Firefox don't share audio. |
+| Audio file | **Open file…**, or drop one anywhere on the page. It loops, and Pause pauses it. |
+
+Live sources need `localhost` or https. To capture all of macOS, set a virtual device such as
+[BlackHole](https://github.com/ExistentialAudio/BlackHole) as the system input and use Microphone.
+
+For scripted captures, the page exposes `window.lab` (`seek`, `setVisual`, `size`, `paused`, `audio`, `source`,
+`loadAudio`, `capture`). `loadAudio` takes a URL the page can fetch. With a file loaded and `lab.paused = true`,
+frames follow the position in the file and nothing is heard, so videos can be rendered frame by frame against real
+music:
+
+```js
+await lab.loadAudio('http://localhost:8765/track.mp3');
+await lab.capture('hexwall-at-12s', { at: 12 });
+```
 
 ## Troubleshooting
 
