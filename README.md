@@ -346,6 +346,10 @@ The **Audio** menu picks what drives the visuals. Real audio goes through a Java
 Live sources need `localhost` or https. To capture all of macOS, set a virtual device such as
 [BlackHole](https://github.com/ExistentialAudio/BlackHole) as the system input and use Microphone.
 
+**Fullscreen** (or F, or a double-click on the picture) fills the screen at its native resolution, hides the cursor
+after two seconds and keeps the display awake where the browser supports it. ← and → change the visual, and F or Esc
+leaves. It doesn't start on its own like a system screensaver.
+
 For scripted captures, the page exposes `window.lab` (`seek`, `setVisual`, `size`, `paused`, `audio`, `source`,
 `loadAudio`, `capture`). `loadAudio` takes a URL the page can fetch. With a file loaded and `lab.paused = true`,
 frames follow the position in the file and nothing is heard, so videos can be rendered frame by frame against real

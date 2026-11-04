@@ -18,6 +18,8 @@
   #log { white-space: pre-wrap; color: #ff8a80; font: 12px/1.35 ui-monospace, monospace; }
   #stats, #audio-info { color: var(--muted); font-variant-numeric: tabular-nums; }
   body.drop canvas { outline: 2px dashed var(--accent); outline-offset: 4px; }
+  canvas:fullscreen { width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; }
+  canvas.idle { cursor: none; }
 </style>
 </head>
 <body>
@@ -38,6 +40,7 @@
   <input id="file" type="file" accept="audio/*" hidden>
   <button id="grid">Grid</button>
   <button id="pause">Pause</button>
+  <button id="fullscreen" title="F or double-click. In full screen, ← → change the visual.">Fullscreen</button>
   <span id="stats"></span>
   <span id="audio-info"></span>
 </header>
@@ -959,6 +962,74 @@ addEventListener('drop', (e) => {
   e.preventDefault();
   document.body.classList.remove('drop');
   if (e.dataTransfer.files[0]) openFile(e.dataTransfer.files[0]);
+});
+
+// ---- Fullscreen ---------------------------------------------------------------------------
+// The canvas takes over the screen at its native resolution (Scale still applies) and keeps it awake.
+let windowedSize = null, wakeLock = null, cursorTimer = 0;
+
+function setCanvasSize(w, h) {
+  if (canvas.width === w && canvas.height === h) return;
+  canvas.width = w;
+  canvas.height = h;
+  if (paused) renderFrame(0); // resizing clears the canvas, and a paused lab wouldn't redraw it
+}
+
+function fitScreen() {
+  setCanvasSize(Math.round(canvas.clientWidth * devicePixelRatio), Math.round(canvas.clientHeight * devicePixelRatio));
+}
+
+async function keepAwake() {
+  try {
+    wakeLock = await navigator.wakeLock?.request('screen') ?? null;
+  } catch {
+    wakeLock = null; // unsupported or refused: the screen then sleeps as usual
+  }
+}
+
+function showCursor() {
+  canvas.classList.remove('idle');
+  clearTimeout(cursorTimer);
+  if (document.fullscreenElement === canvas) cursorTimer = setTimeout(() => canvas.classList.add('idle'), 2000);
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else canvas.requestFullscreen().catch((e) => log(`Fullscreen: ${e.message}`));
+}
+
+$('fullscreen').hidden = !document.fullscreenEnabled;
+$('fullscreen').onclick = toggleFullscreen;
+canvas.ondblclick = toggleFullscreen;
+canvas.onmousemove = showCursor;
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement === canvas) {
+    windowedSize = [canvas.width, canvas.height];
+    fitScreen();
+    keepAwake();
+  } else {
+    setCanvasSize(...windowedSize);
+    wakeLock?.release();
+    wakeLock = null;
+  }
+  showCursor();
+});
+addEventListener('resize', () => { if (document.fullscreenElement === canvas) fitScreen(); });
+// The browser drops the wake lock whenever the tab is hidden.
+document.addEventListener('visibilitychange', () => {
+  if (document.fullscreenElement === canvas && document.visibilityState === 'visible') keepAwake();
+});
+addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const full = document.fullscreenElement === canvas;
+  if (e.key.toLowerCase() === 'f' && (full || !e.target.matches('select, input'))) {
+    toggleFullscreen();
+  } else if (full && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    e.preventDefault();
+    const n = $('visual').options.length, step = e.key === 'ArrowRight' ? 1 : -1;
+    $('visual').selectedIndex = ($('visual').selectedIndex + step + n) % n;
+    $('visual').onchange();
+  }
 });
 
 function setPaused(p) {

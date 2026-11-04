@@ -9,6 +9,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 - Shader Lab: real audio from the microphone, a browser tab or an audio file, analysed by a port of the app's
   `AudioAnalyzer`; files can also be rendered frame by frame through `lab.loadAudio`
+- Shader Lab: fullscreen at native resolution with a hidden cursor, a screen wake lock and ← → to change the visual
 
 ### Changed
 
